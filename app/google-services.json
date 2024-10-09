@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "485658102950",
+    "project_id": "whatilike-5b318",
+    "storage_bucket": "whatilike-5b318.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:485658102950:android:f724ef9b41244fdef87867",
+        "android_client_info": {
+          "package_name": "com.example.whatilike"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "485658102950-bl6bv5doikjlmktmp1pk4185aebba3pf.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.whatilike",
+            "certificate_hash": "0e93d11b8d424a2e2b76e6cae038ae71d178b2d0"
+          }
+        },
+        {
+          "client_id": "485658102950-8mf13pvedaltpblvkh37o7rfmjdivnoo.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAmxS5Dq8LcsA7p_bWJUF8mCVtVYg111rQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "485658102950-8mf13pvedaltpblvkh37o7rfmjdivnoo.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
