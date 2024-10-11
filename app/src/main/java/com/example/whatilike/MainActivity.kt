@@ -4,13 +4,21 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.example.whatilike.ui.theme.WhatilikeTheme
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.auth.AuthResult
@@ -21,6 +29,7 @@ import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.tasks.Task
+
 
 class MainActivity : ComponentActivity() {
     private lateinit var auth: FirebaseAuth
@@ -39,7 +48,7 @@ class MainActivity : ComponentActivity() {
         googleSignInClient = GoogleSignIn.getClient(this, gso)
 
         setContent {
-            MaterialTheme {
+            WhatilikeTheme {
                 MainScreen()
             }
         }
@@ -73,19 +82,43 @@ class MainActivity : ComponentActivity() {
 
     @Composable
     fun SignInScreen(onSignInClick: () -> Unit, onSignUpClick: () -> Unit) {
-        Column(
-            modifier = Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(text = "Welcome! Please Sign In")
-            Spacer(modifier = Modifier.height(16.dp))
-            Button(onClick = onSignInClick) {
-                Text(text = "Sign in with Google")
-            }
-            Spacer(modifier = Modifier.height(16.dp))
-            Button(onClick = onSignUpClick) {
-                Text(text = "Sign Up")
+        Box(modifier = Modifier.fillMaxSize()) {
+            Image(
+                painter = painterResource(id = R.drawable.dali),
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize()
+            )
+
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Spacer(modifier = Modifier.height(120.dp))
+                Text(text = getString(R.string.auth_query), fontFamily= FontFamily.Monospace, fontSize=28.sp,)
+                Spacer(modifier = Modifier.height(380.dp))
+
+
+                Row(modifier = Modifier.fillMaxWidth().padding(5.dp), horizontalArrangement = Arrangement.Center) {
+                    Button(onClick = onSignInClick,  colors = ButtonColors(
+                        containerColor = Color.Transparent,
+                        contentColor = Color.White,
+                        disabledContainerColor = Color.Transparent,
+                        disabledContentColor = Color.White)) {
+                        Text(text = "Sign In", fontFamily= FontFamily.Monospace,)
+                    }
+//                    Spacer(modifier = Modifier.width(5.dp))
+                    Button(onClick = onSignUpClick, colors = ButtonColors(
+                        containerColor = Color.Transparent,
+                        contentColor = Color.White,
+                        disabledContainerColor = Color.Transparent,
+                        disabledContentColor = Color.White)) {
+                        Text(text = "Sign Up",  fontFamily= FontFamily.Monospace,)
+                    }
+                }
             }
         }
     }
@@ -100,8 +133,16 @@ class MainActivity : ComponentActivity() {
             title = { Text("Register") },
             text = {
                 Column {
-                    TextField(value = email, onValueChange = { email = it }, label = { Text("Email") })
-                    TextField(value = password, onValueChange = { password = it }, label = { Text("Password") }, visualTransformation = PasswordVisualTransformation())
+                    TextField(
+                        value = email,
+                        onValueChange = { email = it },
+                        label = { Text("Email") })
+                    TextField(
+                        value = password,
+                        onValueChange = { password = it },
+                        label = { Text("Password") },
+                        visualTransformation = PasswordVisualTransformation()
+                    )
                 }
             },
             confirmButton = {
