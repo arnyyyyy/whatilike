@@ -4,18 +4,22 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.whatilike.ui.theme.WhatilikeTheme
@@ -57,7 +61,6 @@ class MainActivity : ComponentActivity() {
     @Composable
     fun MainScreen() {
         var currentUser by remember { mutableStateOf<FirebaseUser?>(null) }
-        var showDialog by remember { mutableStateOf(false) }
 
 
         LaunchedEffect(Unit) {
@@ -66,22 +69,21 @@ class MainActivity : ComponentActivity() {
         }
 
 
+
         if (currentUser != null) {
             HomeScreen(currentUser)
         } else {
-            SignInScreen(
+            AuthScreen(
                 onSignInClick = { signInWithGoogle() },
-                onSignUpClick = { showDialog = true }
+                onSignUpClick = { signInWithGoogle() },
             )
         }
 
-        if (showDialog) {
-            SignUpDialog(onDismiss = { showDialog = false })
-        }
+
     }
 
     @Composable
-    fun SignInScreen(onSignInClick: () -> Unit, onSignUpClick: () -> Unit) {
+    fun AuthScreen(onSignInClick: () -> Unit, onSignUpClick: () -> Unit) {
         Box(modifier = Modifier.fillMaxSize()) {
             Image(
                 painter = painterResource(id = R.drawable.dali),
@@ -98,77 +100,52 @@ class MainActivity : ComponentActivity() {
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Spacer(modifier = Modifier.height(120.dp))
-                Text(text = getString(R.string.auth_query), fontFamily= FontFamily.Monospace, fontSize=28.sp,)
+                Text(
+                    text = getString(R.string.auth_query),
+                    fontFamily = FontFamily.Monospace,
+                    fontSize = 28.sp,
+                )
                 Spacer(modifier = Modifier.height(380.dp))
 
 
-                Row(modifier = Modifier.fillMaxWidth().padding(5.dp), horizontalArrangement = Arrangement.Center) {
-                    Button(onClick = onSignInClick,  colors = ButtonColors(
-                        containerColor = Color.Transparent,
-                        contentColor = Color.White,
-                        disabledContainerColor = Color.Transparent,
-                        disabledContentColor = Color.White)) {
-                        Text(text = "Sign In", fontFamily= FontFamily.Monospace,)
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(0.dp),
+                    horizontalArrangement = Arrangement.Center
+                ) {
+
+                    Button(
+                        onClick = onSignInClick, colors = ButtonColors(
+                            containerColor = Color.Transparent,
+                            contentColor = Color.White,
+                            disabledContainerColor = Color.Transparent,
+                            disabledContentColor = Color.White
+                        )
+                    ) {
+                        Text(text = "Sign In", fontFamily = FontFamily.Monospace)
                     }
-//                    Spacer(modifier = Modifier.width(5.dp))
-                    Button(onClick = onSignUpClick, colors = ButtonColors(
-                        containerColor = Color.Transparent,
-                        contentColor = Color.White,
-                        disabledContainerColor = Color.Transparent,
-                        disabledContentColor = Color.White)) {
-                        Text(text = "Sign Up",  fontFamily= FontFamily.Monospace,)
+
+                    Text(
+                        text = "|",
+                        fontFamily = FontFamily.Monospace,
+                        fontSize = 20.sp,
+                        modifier = Modifier.padding(10.dp)
+                    )
+
+                    Button(
+                        onClick = onSignUpClick, colors = ButtonColors(
+                            containerColor = Color.Transparent,
+                            contentColor = Color.White,
+                            disabledContainerColor = Color.Transparent,
+                            disabledContentColor = Color.White
+                        )
+                    ) {
+                        Text(text = "Sign Up", fontFamily = FontFamily.Monospace)
                     }
                 }
             }
         }
-    }
-
-    @Composable
-    fun SignUpDialog(onDismiss: () -> Unit) {
-        var email by remember { mutableStateOf("") }
-        var password by remember { mutableStateOf("") }
-
-        AlertDialog(
-            onDismissRequest = { onDismiss() },
-            title = { Text("Register") },
-            text = {
-                Column {
-                    TextField(
-                        value = email,
-                        onValueChange = { email = it },
-                        label = { Text("Email") })
-                    TextField(
-                        value = password,
-                        onValueChange = { password = it },
-                        label = { Text("Password") },
-                        visualTransformation = PasswordVisualTransformation()
-                    )
-                }
-            },
-            confirmButton = {
-                Button(onClick = {
-                    createAccount(email, password)
-                    onDismiss()
-                }) {
-                    Text("Register")
-                }
-            },
-            dismissButton = {
-                Button(onClick = { onDismiss() }) {
-                    Text("Dismiss")
-                }
-            }
-        )
-    }
-
-    private fun createAccount(email: String, password: String) {
-        auth.createUserWithEmailAndPassword(email, password)
-            .addOnCompleteListener(this) { task ->
-                if (task.isSuccessful) {
-                    val user = auth.currentUser
-                } else {
-                }
-            }
     }
 
     private fun signInWithGoogle() {
@@ -187,11 +164,22 @@ class MainActivity : ComponentActivity() {
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(text = "Hello, ${user?.displayName ?: "User"}!")
-            Text(text = "Your email: ${user?.email}")
-            Spacer(modifier = Modifier.height(16.dp))
-            Button(onClick = { signOut() }) {
-                Text(text = "Sign Out")
+            Text(text = "Hello, ${user?.displayName ?: "User"}!", fontFamily = FontFamily.Monospace)
+            Text(text = "Your email: ${user?.email}", fontFamily = FontFamily.Monospace)
+            Spacer(modifier = Modifier.height(400.dp))
+            Button(
+                onClick = { signOut() },
+                colors = ButtonColors(
+                    containerColor = Color.Transparent,
+                    contentColor = Color.Black,
+                    disabledContainerColor = Color.Transparent,
+                    disabledContentColor = Color.White
+                ),
+                shape = RectangleShape,
+                border = BorderStroke(1.dp, Color.Black)
+
+            ) {
+                Text(text = "Sign Out", fontFamily = FontFamily.Monospace)
             }
         }
     }
