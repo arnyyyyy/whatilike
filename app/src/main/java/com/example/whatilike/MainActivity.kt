@@ -8,6 +8,12 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.BottomNavigation
+import androidx.compose.material.BottomNavigationItem
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -22,6 +28,14 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
+import androidx.navigation.NavDestination.Companion.hierarchy
+import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.Navigation
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
 import com.example.whatilike.ui.theme.WhatilikeTheme
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
@@ -59,27 +73,58 @@ class MainActivity : ComponentActivity() {
     }
 
     @Composable
+    fun NavigationGraph(user: FirebaseUser?) {
+        val navController = rememberNavController()
+        Scaffold(
+            bottomBar = {
+                NavigationBar() {
+                    BottomNavigationItem(
+                        icon = { null },
+                        label = { Text("Home", fontFamily = FontFamily.Monospace) },
+                        selected = false,
+                        onClick = { navController.navigate("home") }
+                    )
+                    BottomNavigationItem(
+                        icon = { null },
+                        label = { Text("+", fontFamily = FontFamily.Monospace) },
+                        selected = false,
+                        onClick = { navController.navigate("+") }
+                    )
+                    BottomNavigationItem(
+                        icon = { null },
+                        label = { Text("Profile", fontFamily = FontFamily.Monospace) },
+                        selected = false,
+                        onClick = { navController.navigate("profile") }
+                    )
+
+                }
+            }
+        ) { innerPadding ->
+            NavHost(navController, startDestination = "home", Modifier.padding(innerPadding)) {
+                composable("home") { HomeScreen(user, navController) }
+                composable("+") { SettingsScreen() }
+                composable("profile") { ProfileScreen() }
+            }
+        }
+    }
+
+    @Composable
     fun MainScreen() {
         var currentUser by remember { mutableStateOf<FirebaseUser?>(null) }
-
 
         LaunchedEffect(Unit) {
             val user = auth.currentUser
             currentUser = user
         }
 
-
-
         if (currentUser != null) {
-            HomeScreen(currentUser)
+            NavigationGraph(currentUser)
         } else {
             AuthScreen(
                 onSignInClick = { signInWithGoogle() },
                 onSignUpClick = { signInWithGoogle() },
             )
         }
-
-
     }
 
     @Composable
@@ -158,7 +203,7 @@ class MainActivity : ComponentActivity() {
     }
 
     @Composable
-    fun HomeScreen(user: FirebaseUser?) {
+    fun HomeScreen(user: FirebaseUser?, navController: NavController) {
         Column(
             modifier = Modifier.fillMaxSize(),
             verticalArrangement = Arrangement.Center,
@@ -184,6 +229,17 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+
+    @Composable
+    fun SettingsScreen() {
+        Text(text = "Settings Screen")
+    }
+
+    @Composable
+    fun ProfileScreen() {
+        Text(text = "Profile Screen")
+    }
+
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
 
@@ -199,13 +255,23 @@ class MainActivity : ComponentActivity() {
             val credential = GoogleAuthProvider.getCredential(account.idToken, null)
             auth.signInWithCredential(credential).addOnCompleteListener { task: Task<AuthResult> ->
                 if (task.isSuccessful) {
-                    val user = auth.currentUser
+//                    val user = auth.currentUser
                 } else {
                 }
             }
         } catch (e: ApiException) {
         }
     }
+
+//    @Composable
+//    fun HomeScreen(navController: NavController) {
+//        Column {
+//            Text("Home Screen")
+//            Button(onClick = { navController.navigate("detail") }) {
+//                Text("Go to Detail")
+//            }
+//        }
+//    }
 
     companion object {
         private const val RC_SIGN_IN = 9001

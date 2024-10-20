@@ -57,6 +57,9 @@ dependencies {
     implementation("com.google.firebase:firebase-firestore")
     implementation("com.google.android.gms:play-services-auth:21.2.0")
     implementation ("com.google.firebase:firebase-database:21.0.0")
+    implementation ("androidx.navigation:navigation-compose:2.8.3")
+    implementation ("androidx.compose.material:material:1.4.2")
+
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
