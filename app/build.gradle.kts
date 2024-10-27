@@ -60,6 +60,10 @@ dependencies {
     implementation (libs.androidx.navigation.compose)
     implementation (libs.firebase.messaging)
 
+    implementation (libs.retrofit)
+    implementation (libs.converter.gson)
+    implementation(libs.coil.compose)
+
     implementation (libs.androidx.material)
 
 
@@ -72,6 +76,7 @@ dependencies {
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
     implementation(libs.androidx.appcompat)
+    implementation(libs.androidx.runtime.livedata)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

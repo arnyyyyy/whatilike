@@ -4,6 +4,7 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
@@ -38,15 +39,34 @@ import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.messaging.FirebaseMessaging
 import kotlinx.coroutines.launch
 
+
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.Text
+import androidx.compose.runtime.*
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.runtime.livedata.observeAsState
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import coil.compose.rememberImagePainter
+import com.example.whatilike.api.ArtObject
+import com.example.whatilike.repository.ArtRepository
+import kotlinx.coroutines.launch
+
 class MainActivity : ComponentActivity() {
     private lateinit var auth: FirebaseAuth
     private lateinit var googleSignInClient: GoogleSignInClient
     private var currentUser by mutableStateOf<FirebaseUser?>(null)
 
-    private val signInLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-        val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
-        handleSignInResult(task)
-    }
+    private val signInLauncher =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
+            handleSignInResult(task)
+        }
 
     private val authListener = FirebaseAuth.AuthStateListener { firebaseAuth ->
         currentUser = firebaseAuth.currentUser
@@ -91,10 +111,18 @@ class MainActivity : ComponentActivity() {
 
     private fun createNotificationChannels() {
         val channels = listOf(
-            NotificationChannel("channel1_id", "Channel 1", NotificationManager.IMPORTANCE_HIGH).apply {
+            NotificationChannel(
+                "channel1_id",
+                "Channel 1",
+                NotificationManager.IMPORTANCE_HIGH
+            ).apply {
                 description = "This is Channel 1"
             },
-            NotificationChannel("channel2_id", "Channel 2", NotificationManager.IMPORTANCE_LOW).apply {
+            NotificationChannel(
+                "channel2_id",
+                "Channel 2",
+                NotificationManager.IMPORTANCE_LOW
+            ).apply {
                 description = "This is Channel 2"
             }
         )
@@ -238,8 +266,16 @@ class MainActivity : ComponentActivity() {
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(text = "Hello, ${user?.displayName ?: "User"}!", fontFamily = FontFamily.Monospace)
-            Text(text = "Your email: ${user?.email}", fontFamily = FontFamily.Monospace)
+            Text(
+                text = "Hello, ${user?.displayName ?: "User"}!",
+                fontFamily = FontFamily.Monospace,
+                color = Color.Black
+            )
+            Text(
+                text = "Your email: ${user?.email}",
+                fontFamily = FontFamily.Monospace,
+                color = Color.Black
+            )
             Spacer(modifier = Modifier.height(400.dp))
             Button(
                 onClick = { signOut() },
@@ -264,12 +300,122 @@ class MainActivity : ComponentActivity() {
 
     @Composable
     fun SettingsScreen() {
-        Text(text = "Settings Screen")
+//        Text(text = "Settings Screen", color = Color.Black)
     }
 
     @Composable
     fun ProfileScreen() {
-        Text(text = "Profile Screen")
+//        Text(text = "Profile Screen", color = Color.Black)
+        ArtScreen()
     }
+
+
+    class ArtViewModel : ViewModel() {
+        private val repository = ArtRepository()
+        private val _artworks = mutableStateOf<List<ArtObject>>(emptyList())
+        val artworks: State<List<ArtObject>> = _artworks
+
+        fun loadRandomArtworks(count: Int) {
+            viewModelScope.launch {
+                try {
+                    val result = repository.getRandomArtworks(count)
+                    _artworks.value = result
+                    Log.d("ArtViewModel", "Number of artworks loaded: ${result.size}")
+                } catch (e: Exception) {
+                    Log.e("ArtViewModel", "Failed to load artworks", e)
+                }
+            }
+        }
+    }
+
+//    @Composable
+//    fun ArtScreen(viewModel: ArtViewModel = ArtViewModel()) {
+//        val artworks by viewModel.artworks
+//
+////        LaunchedEffect(Unit) {
+//            viewModel.loadRandomArtworks(5)
+////        }
+//
+//        if (artworks.isEmpty()) {
+//            Box(
+//                modifier = Modifier.fillMaxSize(),
+//                contentAlignment = Alignment.Center
+//            ) {
+//                Text(text = "No artworks found", fontSize = 18.sp, color = Color.Black)
+//            }
+//        } else {
+//            LazyColumn(
+//                modifier = Modifier.fillMaxSize(),
+//                contentPadding = PaddingValues(16.dp)
+//            ) {
+//                items(artworks) { artwork ->
+//                    ArtworkItem(artwork)
+//                    Spacer(modifier = Modifier.height(16.dp))
+//                    Text(text = "found", fontSize = 18.sp, color = Color.Black)
+//                }
+//            }
+//        }
+//    }
+
+    @Composable
+    fun ArtScreen(viewModel: ArtViewModel = androidx.lifecycle.viewmodel.compose.viewModel()) {
+        val artworks by viewModel.artworks
+
+        // Загружаем данные только при первом запуске
+        LaunchedEffect(Unit) {
+            viewModel.loadRandomArtworks(15)
+        }
+
+        if (artworks.isEmpty()) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(text = "No artworks found", fontSize = 18.sp, color = Color.Black)
+            }
+        } else {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(16.dp)
+            ) {
+                items(artworks) { artwork ->
+                    ArtworkItem(artwork)
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
+            }
+
+        }
+    }
+
+
+    @Composable
+    fun ArtworkItem(artwork: ArtObject) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(8.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Image(
+                painter = rememberImagePainter(data = artwork.primaryImage),
+                contentDescription = artwork.title,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(200.dp)
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = artwork.title,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold
+            )
+            Text(
+                text = artwork.artistDisplayName,
+                fontSize = 16.sp
+            )
+        }
+    }
+
 }
+
 
