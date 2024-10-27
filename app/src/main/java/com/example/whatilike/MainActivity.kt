@@ -6,10 +6,10 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.BottomNavigationItem
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -26,45 +26,48 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.whatilike.ui.theme.WhatilikeTheme
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.GoogleAuthProvider
-import com.google.firebase.auth.AuthResult
-import com.google.firebase.auth.FirebaseUser
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.tasks.Task
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseUser
+import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.messaging.FirebaseMessaging
-
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     private lateinit var auth: FirebaseAuth
     private lateinit var googleSignInClient: GoogleSignInClient
+    private var currentUser by mutableStateOf<FirebaseUser?>(null)
+
+    private val signInLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
+        handleSignInResult(task)
+    }
+
+    private val authListener = FirebaseAuth.AuthStateListener { firebaseAuth ->
+        currentUser = firebaseAuth.currentUser
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
         auth = FirebaseAuth.getInstance()
+        auth.addAuthStateListener(authListener)
 
 //        FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
 //            if (task.isSuccessful) {
 //                val token = task.result
-//                println("TOKEN: $token")
+//                println("FCM TOKEN: $token")
 //            } else {
-//                println("NO TOKEN")
+//                println("Failed to retrieve FCM token")
 //            }
 //        }
 
         createNotificationChannels()
-
-        val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-            .requestIdToken(getString(R.string.default_web_client_id))
-            .requestEmail()
-            .build()
-
-        googleSignInClient = GoogleSignIn.getClient(this, gso)
+        configureGoogleSignIn()
 
         setContent {
             WhatilikeTheme {
@@ -73,94 +76,72 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun createNotificationChannels() {
-        val channel1 = NotificationChannel(
-            "channel1_id",
-            "Channel 1",
-            NotificationManager.IMPORTANCE_HIGH
-        ).apply {
-            description = "This is Channel 1"
-        }
-
-        val channel2 = NotificationChannel(
-            "channel2_id",
-            "Channel 2",
-            NotificationManager.IMPORTANCE_LOW
-        ).apply {
-            description = "This is Channel 2"
-        }
-
-        val manager = getSystemService(NotificationManager::class.java)
-        manager.createNotificationChannel(channel1)
-        manager.createNotificationChannel(channel2)
+    override fun onDestroy() {
+        super.onDestroy()
+        auth.removeAuthStateListener(authListener)
     }
 
+    private fun configureGoogleSignIn() {
+        val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+            .requestIdToken(getString(R.string.default_web_client_id))
+            .requestEmail()
+            .build()
+        googleSignInClient = GoogleSignIn.getClient(this, gso)
+    }
 
-    @Composable
-    fun NavigationGraph(user: FirebaseUser?) {
-        val navController = rememberNavController()
-        Scaffold(
-            bottomBar = {
-                NavigationBar {
-                    BottomNavigationItem(
-                        icon = { null },
-                        label = { Text("Home", fontFamily = FontFamily.Monospace) },
-                        selected = false,
-                        onClick = { navController.navigate("home") }
-                    )
-                    BottomNavigationItem(
-                        icon = { null },
-                        label = { Text("+", fontFamily = FontFamily.Monospace) },
-                        selected = false,
-                        onClick = { navController.navigate("+") }
-                    )
-                    BottomNavigationItem(
-                        icon = { null },
-                        label = { Text("Profile", fontFamily = FontFamily.Monospace) },
-                        selected = false,
-                        onClick = { navController.navigate("profile") }
-                    )
+    private fun createNotificationChannels() {
+        val channels = listOf(
+            NotificationChannel("channel1_id", "Channel 1", NotificationManager.IMPORTANCE_HIGH).apply {
+                description = "This is Channel 1"
+            },
+            NotificationChannel("channel2_id", "Channel 2", NotificationManager.IMPORTANCE_LOW).apply {
+                description = "This is Channel 2"
+            }
+        )
 
-                }
-            }
-        ) { innerPadding ->
-            NavHost(navController, startDestination = "home", Modifier.padding(innerPadding)) {
-                composable("home") { HomeScreen(user, navController) }
-                composable("+") { SettingsScreen() }
-                composable("profile") { ProfileScreen() }
-            }
-        }
+        val manager = getSystemService(NotificationManager::class.java)
+        channels.forEach { manager.createNotificationChannel(it) }
     }
 
     @Composable
     fun MainScreen() {
-        var currentUser by remember { mutableStateOf<FirebaseUser?>(null) }
-
-        LaunchedEffect(Unit) {
-            val user = auth.currentUser
-            currentUser = user
-        }
-
         if (currentUser != null) {
             NavigationGraph(currentUser)
         } else {
-            AuthScreen(
-                onSignInClick = { signInWithGoogle() },
-                onSignUpClick = { signInWithGoogle() },
-            )
+            AuthScreen(onSignInClick = { signInWithGoogle() })
+        }
+    }
+
+    private fun signInWithGoogle() {
+        val signInIntent = googleSignInClient.signInIntent
+        signInLauncher.launch(signInIntent)
+    }
+
+    private fun handleSignInResult(task: Task<GoogleSignInAccount>) {
+        try {
+            val account = task.getResult(ApiException::class.java)
+            val credential = GoogleAuthProvider.getCredential(account?.idToken, null)
+            auth.signInWithCredential(credential).addOnCompleteListener { signInTask ->
+                if (signInTask.isSuccessful) {
+                    println("Sign in successful")
+                } else {
+                    println("Sign in failed: ${signInTask.exception?.message}")
+                }
+            }
+        } catch (e: ApiException) {
+            println("Google sign-in failed: ${e.message}")
         }
     }
 
     @Composable
-    fun AuthScreen(onSignInClick: () -> Unit, onSignUpClick: () -> Unit) {
+    fun AuthScreen(onSignInClick: () -> Unit) {
         Box(modifier = Modifier.fillMaxSize()) {
             Image(
                 painter = painterResource(id = R.drawable.dali),
                 contentDescription = null,
+                modifier = Modifier.fillMaxHeight(),
                 contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize()
             )
-
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -168,6 +149,7 @@ class MainActivity : ComponentActivity() {
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
+
                 Spacer(modifier = Modifier.height(120.dp))
                 Text(
                     text = getString(R.string.auth_query),
@@ -203,7 +185,7 @@ class MainActivity : ComponentActivity() {
                     )
 
                     Button(
-                        onClick = onSignUpClick, colors = ButtonColors(
+                        onClick = onSignInClick, colors = ButtonColors(
                             containerColor = Color.Transparent,
                             contentColor = Color.White,
                             disabledContainerColor = Color.Transparent,
@@ -217,15 +199,37 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun signInWithGoogle() {
-        val signInIntent = googleSignInClient.signInIntent
-        startActivityForResult(signInIntent, RC_SIGN_IN)
+    @Composable
+    fun NavigationGraph(user: FirebaseUser?) {
+        val navController = rememberNavController()
+        Scaffold(
+            bottomBar = {
+                NavigationBar {
+                    NavigationBarItem(
+                        icon = { Text("Favs", fontFamily = FontFamily.Monospace) },
+                        selected = false,
+                        onClick = { navController.navigate("favs") }
+                    )
+                    NavigationBarItem(
+                        icon = { Text("Gallery", fontFamily = FontFamily.Monospace) },
+                        selected = false,
+                        onClick = { navController.navigate("gallery") }
+                    )
+                    NavigationBarItem(
+                        icon = { Text("Me", fontFamily = FontFamily.Monospace) },
+                        selected = false,
+                        onClick = { navController.navigate("me") }
+                    )
+                }
+            }
+        ) { innerPadding ->
+            NavHost(navController, startDestination = "favs", Modifier.padding(innerPadding)) {
+                composable("favs") { HomeScreen(user, navController) }
+                composable("gallery") { SettingsScreen() }
+                composable("me") { ProfileScreen() }
+            }
+        }
     }
-
-    private fun signOut() {
-        auth.signOut()
-    }
-
 
     @Composable
     fun HomeScreen(user: FirebaseUser?, navController: NavController) {
@@ -254,6 +258,9 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    private fun signOut() {
+        auth.signOut()
+    }
 
     @Composable
     fun SettingsScreen() {
@@ -264,30 +271,5 @@ class MainActivity : ComponentActivity() {
     fun ProfileScreen() {
         Text(text = "Profile Screen")
     }
-
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-
-        if (requestCode == RC_SIGN_IN) {
-            val task: Task<GoogleSignInAccount> = GoogleSignIn.getSignedInAccountFromIntent(data)
-            handleSignInResult(task)
-        }
-    }
-
-    private fun handleSignInResult(completedTask: Task<GoogleSignInAccount>) {
-        try {
-            val account = completedTask.getResult(ApiException::class.java)
-            val credential = GoogleAuthProvider.getCredential(account.idToken, null)
-            auth.signInWithCredential(credential).addOnCompleteListener { task: Task<AuthResult> ->
-                if (task.isSuccessful) {
-                } else {
-                }
-            }
-        } catch (_: ApiException) {
-        }
-    }
-
-    companion object {
-        private const val RC_SIGN_IN = 9001
-    }
 }
+
