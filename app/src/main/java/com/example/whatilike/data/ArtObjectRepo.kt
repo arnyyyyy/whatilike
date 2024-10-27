@@ -1,14 +1,13 @@
 package com.example.whatilike.repository
 
 import android.util.Log
-import com.example.whatilike.api.ApiClient
-import com.example.whatilike.api.ArtObject
+import com.example.whatilike.data.ApiDatabase
+import com.example.whatilike.data.ArtObject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import kotlin.random.Random
 
 class ArtRepository {
-    private val api = ApiClient.apiService
+    private val api = ApiDatabase.apiService
 
     suspend fun getRandomArtworks(count: Int = 5): List<ArtObject> = withContext(Dispatchers.IO) {
         val response = api.getAllObjectIDs()
@@ -16,7 +15,6 @@ class ArtRepository {
             val ids = response.body()?.objectIDs ?: emptyList()
             Log.d("ArtRepository", "Total Object IDs fetched: ${ids.size}")
 
-            // Проверяем, что список не пустой
             if (ids.isNotEmpty()) {
                 val randomIds = ids.shuffled().take(count)
 

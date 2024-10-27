@@ -1,14 +1,7 @@
-package com.example.whatilike.api
+package com.example.whatilike.data
 
 import retrofit2.Response
 import retrofit2.http.GET
-
-data class ArtObject(
-    val objectID: Int,
-    val primaryImage: String?,
-    val title: String,
-    val artistDisplayName: String
-)
 
 data class ArtObjectResponse(val objectIDs: List<Int>)
 
