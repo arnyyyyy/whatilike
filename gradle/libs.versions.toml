@@ -2,9 +2,9 @@
 agp = "8.6.0"
 coilCompose = "2.4.0"
 converterGson = "2.9.0"
-firebaseBom = "33.5.1"
-firebaseDatabase = "21.0.0"
-firebaseMessaging = "24.0.3"
+#firebaseBom = "33.5.1"
+#firebaseDatabase = "21.0.0"
+#firebaseMessaging = "24.0.3"
 kotlin = "1.9.0"
 coreKtx = "1.13.1"
 junit = "4.13.2"
@@ -19,6 +19,9 @@ navigationCompose = "2.8.3"
 playServicesAuth = "21.2.0"
 retrofit = "2.9.0"
 runtimeLivedata = "1.7.4"
+#firebaseStorageKtx = "21.0.1"
+#firebaseStorageKtx = "21.0.1"
+
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -26,12 +29,14 @@ androidx-material = { module = "androidx.compose.material:material", version.ref
 androidx-navigation-compose = { module = "androidx.navigation:navigation-compose", version.ref = "navigationCompose" }
 coil-compose = { module = "io.coil-kt:coil-compose", version.ref = "coilCompose" }
 converter-gson = { module = "com.squareup.retrofit2:converter-gson", version.ref = "converterGson" }
-firebase-analytics = { module = "com.google.firebase:firebase-analytics" }
-firebase-auth = { module = "com.google.firebase:firebase-auth" }
-firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebaseBom" }
-firebase-database = { module = "com.google.firebase:firebase-database", version.ref = "firebaseDatabase" }
-firebase-firestore = { module = "com.google.firebase:firebase-firestore" }
-firebase-messaging = { module = "com.google.firebase:firebase-messaging", version.ref = "firebaseMessaging" }
+#firebase-analytics = { module = "com.google.firebase:firebase-analytics" }
+#firebase-auth = { module = "com.google.firebase:firebase-auth" }
+#firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebaseBom" }
+#firebase-database = { module = "com.google.firebase:firebase-database", version.ref = "firebaseDatabase" }
+#firebase-firestore = { module = "com.google.firebase:firebase-firestore" }
+#firebase-messaging = { module = "com.google.firebase:firebase-messaging", version.ref = "firebaseMessaging" }
+
+gms-play-services-auth = { module = "com.google.android.gms:play-services-auth", version.ref = "playServicesAuth" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }

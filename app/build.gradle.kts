@@ -1,7 +1,7 @@
 plugins {
+    id("com.google.gms.google-services") version "4.4.2"
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
-    id("com.google.gms.google-services")
 }
 
 android {
@@ -51,14 +51,18 @@ android {
 }
 
 dependencies {
-    implementation(platform(libs.firebase.bom))
-    implementation(libs.firebase.analytics)
-    implementation(libs.firebase.auth)
-    implementation(libs.firebase.firestore)
-    implementation(libs.play.services.auth)
-    implementation (libs.firebase.database)
-    implementation (libs.androidx.navigation.compose)
-    implementation (libs.firebase.messaging)
+    implementation(platform("com.google.firebase:firebase-bom:33.5.1"))
+    implementation("com.google.firebase:firebase-storage")
+    implementation("com.google.firebase:firebase-analytics")
+    implementation("com.google.firebase:firebase-auth")
+    implementation("com.google.firebase:firebase-firestore")
+    implementation("com.google.firebase:firebase-database")
+
+    implementation(libs.gms.play.services.auth)
+
+    implementation("androidx.navigation:navigation-compose:2.8.3")
+
+    implementation("androidx.compose.material:material:1.7.4")
 
     implementation (libs.retrofit)
     implementation (libs.converter.gson)
