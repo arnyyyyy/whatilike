@@ -24,6 +24,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import coil.compose.rememberAsyncImagePainter
 import com.google.firebase.auth.FirebaseUser
+import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.ktx.storage
 import kotlinx.coroutines.tasks.await
@@ -31,8 +32,20 @@ import java.util.*
 
 @Composable
 fun ProfileScreen(user: FirebaseUser?, signOut: () -> Unit) {
-    var photoUrl by remember { mutableStateOf(user?.photoUrl?.toString()) }
-    val storageRef = Firebase.storage.reference
+    var photoUrl by remember { mutableStateOf<String?>(null) }
+    val firestore = Firebase.firestore
+
+    LaunchedEffect(user?.uid) {
+        user?.uid?.let { userId ->
+            firestore.collection("users").document(userId).get()
+                .addOnSuccessListener { document ->
+                    photoUrl = document.getString("photoUrl") ?: user.photoUrl?.toString()
+                }
+                .addOnFailureListener {
+                    photoUrl = user.photoUrl?.toString()
+                }
+        }
+    }
 
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent(),
@@ -94,14 +107,21 @@ fun ProfileScreen(user: FirebaseUser?, signOut: () -> Unit) {
     }
 }
 
+
 fun uploadUserPhoto(uri: Uri, userId: String, onSuccess: (String) -> Unit) {
     val storage = Firebase.storage
+    val firestore = Firebase.firestore
     val storageRef = storage.reference.child("user_photos/$userId.jpg")
 
     storageRef.putFile(uri)
         .addOnSuccessListener {
             storageRef.downloadUrl.addOnSuccessListener { downloadUri ->
-                onSuccess(downloadUri.toString())
+                val photoUrl = downloadUri.toString()
+                firestore.collection("users").document(userId)
+                    .set(mapOf("photoUrl" to photoUrl))
+                    .addOnSuccessListener {
+                        onSuccess(photoUrl)
+                    }
             }
         }
         .addOnFailureListener {

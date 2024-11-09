@@ -59,6 +59,7 @@ dependencies {
     implementation("com.google.firebase:firebase-database")
     implementation ("com.google.accompanist:accompanist-pager:0.36.0")
     implementation ("com.google.accompanist:accompanist-pager-indicators:0.36.0")
+    implementation ("com.google.firebase:firebase-appcheck-playintegrity")
 
 
     implementation(libs.gms.play.services.auth)

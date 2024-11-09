@@ -153,6 +153,13 @@ fun ArtworkCard(
                             color = Color.Gray
                         )
                         Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = artwork.period?:artwork.objectDate?:"",
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.Black
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
                     }
                 }
             } else {

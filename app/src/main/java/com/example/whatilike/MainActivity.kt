@@ -32,6 +32,8 @@ import com.google.firebase.auth.GoogleAuthProvider
 import com.example.whatilike.screens.AuthScreen
 import com.example.whatilike.screens.FavouritesScreen
 import com.example.whatilike.screens.ProfileScreen
+import com.google.firebase.appcheck.FirebaseAppCheck
+import com.google.firebase.appcheck.playintegrity.PlayIntegrityAppCheckProviderFactory
 
 class MainActivity : ComponentActivity() {
     private lateinit var auth: FirebaseAuth
@@ -52,6 +54,11 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         auth = FirebaseAuth.getInstance()
         auth.addAuthStateListener(authListener)
+
+        val firebaseAppCheck = FirebaseAppCheck.getInstance()
+        firebaseAppCheck.installAppCheckProviderFactory(
+            PlayIntegrityAppCheckProviderFactory.getInstance()
+        )
 
 //        FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
 //            if (task.isSuccessful) {
