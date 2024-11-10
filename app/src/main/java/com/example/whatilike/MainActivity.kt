@@ -152,8 +152,8 @@ class MainActivity : ComponentActivity() {
             }
         ) { innerPadding ->
             NavHost(navController, startDestination = "favs", Modifier.padding(innerPadding)) {
-                composable("favs") { FavouritesScreen() }
-                composable("gallery") { GalleryScreen() }
+                composable("favs") { FavouritesScreen(user = user) }
+                composable("gallery") { GalleryScreen(user = user) }
                 composable("me") { ProfileScreen(user, signOut = { signOut() }) }
             }
         }

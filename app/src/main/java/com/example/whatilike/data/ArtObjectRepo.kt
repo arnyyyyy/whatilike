@@ -37,4 +37,16 @@ class ArtRepository {
             emptyList()
         }
     }
+
+    suspend fun getArtworksByIds(ids: List<Int>): List<ArtObject> = withContext(Dispatchers.IO) {
+        ids.mapNotNull { id ->
+            val response = api.getObjectByID(id)
+            if (response.isSuccessful && response.body() != null) {
+                response.body()
+            } else {
+                Log.e("ArtRepository", "Failed to fetch artwork with ID $id: ${response.code()}")
+                null
+            }
+        }
+    }
 }
