@@ -51,6 +51,8 @@ android {
 }
 
 dependencies {
+    implementation ("androidx.work:work-runtime-ktx:2.8.1")
+
     implementation(platform("com.google.firebase:firebase-bom:33.5.1"))
     implementation("com.google.firebase:firebase-storage")
     implementation("com.google.firebase:firebase-analytics")
@@ -85,6 +87,7 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.runtime.livedata)
+    implementation(libs.androidx.media3.exoplayer)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

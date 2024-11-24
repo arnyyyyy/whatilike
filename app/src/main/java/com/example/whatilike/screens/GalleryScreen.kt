@@ -129,7 +129,7 @@ fun ArtworkCard(
         animationSpec = tween(durationMillis = 300)
     )
 
-    println("SOS: Image URL - ${currentArtwork.value.primaryImage}, ID - ${currentArtwork.value.objectID}") // Нормальный id
+    println("SOS: Image URL - ${currentArtwork.value.primaryImage}, ID - ${currentArtwork.value.objectID}")
 
     Box(
         modifier = Modifier
@@ -152,7 +152,6 @@ fun ArtworkCard(
             }
             .clickable { isFlipped = !isFlipped }
     ) {
-        println("suk " + currentArtwork.value.objectID) // Нормальный id
         Box(
             modifier = Modifier
                 .graphicsLayer {

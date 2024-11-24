@@ -9,7 +9,7 @@ import kotlinx.coroutines.withContext
 class ArtRepository {
     private val api = ApiDatabase.apiService
 
-    suspend fun getRandomArtworks(count: Int = 5): List<ArtObject> = withContext(Dispatchers.IO) {
+    suspend fun getRandomArtworks(count: Int = 15): List<ArtObject> = withContext(Dispatchers.IO) {
         val response = api.getAllObjectIDs()
         if (response.isSuccessful && response.body() != null) {
             val ids = response.body()?.objectIDs ?: emptyList()

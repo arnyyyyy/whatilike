@@ -18,5 +18,4 @@ data class ArtObject(
     val objectURL: String? = null,
     val isHighlight: Boolean? = null,
     val isPublicDomain: Boolean? = null,
-    var isLiked: Boolean = false
 )
