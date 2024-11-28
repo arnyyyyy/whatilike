@@ -53,12 +53,11 @@ android {
 }
 
 dependencies {
-    implementation("androidx.work:work-runtime-ktx:2.8.1")
+    implementation(libs.work.runtime.ktx)
     implementation(libs.identity.jvm)
-    val roomVersion = "2.5.1"
-    implementation("androidx.room:room-runtime:$roomVersion")
-    ksp("androidx.room:room-compiler:$roomVersion")
-    implementation("androidx.room:room-ktx:$roomVersion")
+    implementation(libs.androidx.room.runtime)
+    ksp(libs.androidx.room.compiler)
+    implementation(libs.androidx.room.ktx.v251)
 
     implementation(platform("com.google.firebase:firebase-bom:33.5.1"))
     implementation("com.google.firebase:firebase-storage")
@@ -66,22 +65,22 @@ dependencies {
     implementation("com.google.firebase:firebase-auth")
     implementation("com.google.firebase:firebase-firestore")
     implementation("com.google.firebase:firebase-database")
-    implementation ("com.google.accompanist:accompanist-pager:0.36.0")
-    implementation ("com.google.accompanist:accompanist-pager-indicators:0.36.0")
-    implementation ("com.google.firebase:firebase-appcheck-playintegrity")
+    implementation("com.google.accompanist:accompanist-pager:0.36.0")
+    implementation("com.google.accompanist:accompanist-pager-indicators:0.36.0")
+    implementation("com.google.firebase:firebase-appcheck-playintegrity")
 
 
     implementation(libs.gms.play.services.auth)
 
-    implementation("androidx.navigation:navigation-compose:2.8.3")
+    implementation(libs.androidx.navigation.compose)
 
-    implementation("androidx.compose.material:material:1.7.4")
+    implementation(libs.androidx.material)
 
-    implementation (libs.retrofit)
-    implementation (libs.converter.gson)
+    implementation(libs.retrofit)
+    implementation(libs.converter.gson)
     implementation(libs.coil.compose)
 
-    implementation (libs.androidx.material)
+    implementation(libs.androidx.material)
 
 
     implementation(libs.androidx.core.ktx)
