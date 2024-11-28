@@ -12,14 +12,16 @@ import com.example.whatilike.data.ArtObject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 
 class ArtRepository(private val context: Context, private val cachedArtworkDao: CachedArtworkDao) {
     private val api = ApiDatabase.apiService
     private val imageLoader = ImageLoader(context)
 
+
     suspend fun removeArtworkFromCache(artwork: ArtObject) {
+        Log.d("ArtRepository", "Art repository cached size: ${cachedArtworkDao.getArtworkCount()}")
+
         withContext(Dispatchers.IO) {
             val cachedArtwork = CachedArtwork(
                 objectID = artwork.objectID,
@@ -30,12 +32,15 @@ class ArtRepository(private val context: Context, private val cachedArtworkDao: 
             )
             cachedArtworkDao.deleteArtwork(cachedArtwork)
         }
+        Log.d("ArtRepository", "Artwork removed from cache: ${artwork.objectID}")
+        Log.d("ArtRepository", "Art repository cached size: ${cachedArtworkDao.getArtworkCount()}")
+
     }
+
 
     suspend fun getRandomArtworks(count: Int = 15): List<ArtObject> =
         withContext(Dispatchers.IO) {
-            val cachedArtworks =
-                cachedArtworkDao.getCachedArtworks(count / 2 + 1).first()
+            val cachedArtworks = cachedArtworkDao.getCachedArtworks(count)
             val alreadyLoadedIDs = cachedArtworks.map { it.objectID }.toSet()
 
             val newArtworks =
@@ -58,7 +63,6 @@ class ArtRepository(private val context: Context, private val cachedArtworkDao: 
             Log.d("ArtRepository", "Returning combined artworks: ${combinedArtworks.size}")
             return@withContext combinedArtworks
         }
-
 
     fun cacheAndPreloadImages(newArtworks: List<ArtObject>) {
         val cachedArtworks = newArtworks.map { artwork ->

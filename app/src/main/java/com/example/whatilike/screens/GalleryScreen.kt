@@ -41,7 +41,7 @@ fun GalleryScreen(artViewModel: ArtViewModel, user: FirebaseUser?) {
     val artworks by artViewModel.artworks
 
     LaunchedEffect(Unit) {
-        artViewModel.loadRandomArtworks(15, 15 * 2)
+        artViewModel.loadRandomArtworks(15)
     }
 
     if (artworks.isEmpty()) {
@@ -86,7 +86,7 @@ fun CardSwiper(viewModel: ArtViewModel = viewModel(), userId: String) {
     LaunchedEffect(currentIndex) {
         if (currentIndex >= artworks.size - 3) {
             println("timetoload")
-            viewModel.loadRandomArtworks(10, currentIndex + 10)
+            viewModel.loadRandomArtworks(10)
         }
     }
 

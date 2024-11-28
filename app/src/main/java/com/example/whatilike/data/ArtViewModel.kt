@@ -19,13 +19,13 @@ class ArtViewModel(context: Context, dao: CachedArtworkDao) : ViewModel() {
     private val _isLoading = mutableStateOf(false)
     val isLoading: State<Boolean> = _isLoading
 
-    suspend fun removeArtworkFromCache(artwork: ArtObject) {
+    fun removeArtworkFromCache(artwork: ArtObject) {
         viewModelScope.launch {
             repository.removeArtworkFromCache(artwork)
         }
     }
 
-    fun loadRandomArtworks(count: Int, idx : Int) {
+    fun loadRandomArtworks(count: Int) {
         _isLoading.value = true
 
         viewModelScope.launch {
@@ -41,54 +41,6 @@ class ArtViewModel(context: Context, dao: CachedArtworkDao) : ViewModel() {
         }
     }
 }
-
-
-
-//class ArtViewModel(context: Context, dao: CachedArtworkDao) : ViewModel() {
-//    private val repository = ArtRepository(context, dao)
-//    private val _artworks = MutableStateFlow<List<ArtObject>>(emptyList())
-//    val artworks: StateFlow<List<ArtObject>> = _artworks
-//
-//    val artworks: StateFlow<List<ArtObject>> = repository
-//        .getRandomArtworks(15)
-//        .stateIn(
-//            scope = viewModelScope,
-//            started = SharingStarted.WhileSubscribed(5000),
-//            initialValue = emptyList()
-//        )
-//
-//    private val _isLoading = mutableStateOf(false)
-//    val isLoading: State<Boolean> = _isLoading
-//
-//    fun removeArtworkFromCache(artwork: ArtObject) {
-//        viewModelScope.launch {
-//            try {
-//                repository.removeArtworkFromCache(artwork)
-//                Log.d("ArtViewModel", "Artwork removed from cache: ${artwork.objectID}")
-//            } catch (e: Exception) {
-//                Log.e("ArtViewModel", "Failed to remove artwork", e)
-//            }
-//        }
-//    }
-//
-//    fun loadRandomArtworks(count: Int) {
-//        _isLoading.value = true
-//
-//        viewModelScope.launch {
-//            try {
-//                val result = repository.getRandomArtworks(count)
-//                _artworks.value = _artworks.value + result
-//                Log.d("ArtViewModel", "Total artworks loaded: ${_artworks.value.size}")
-//            } catch (e: Exception) {
-//                Log.e("ArtViewModel", "Failed to load artworks", e)
-//            } finally {
-//                _isLoading.value = false
-//            }
-//        }
-//    }
-//
-//}
-
 
 class ArtViewModelFactory(
     private val context: Context,

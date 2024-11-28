@@ -6,12 +6,14 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
-import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface CachedArtworkDao {
     @Query("SELECT * FROM cached_artworks LIMIT :count")
-    fun getCachedArtworks(count: Int): Flow<List<CachedArtwork>>
+    fun getCachedArtworks(count: Int): List<CachedArtwork>
+
+    @Query("SELECT COUNT(*) FROM cached_artworks")
+    suspend fun getArtworkCount(): Int
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insertArtworks(artworks: List<CachedArtwork>)
