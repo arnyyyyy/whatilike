@@ -3,8 +3,10 @@ package com.example.whatilike.screens
 import android.widget.Toast
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.*
@@ -17,6 +19,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.sharp.Add
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
@@ -38,6 +41,7 @@ import coil.compose.rememberImagePainter
 import com.example.whatilike.data.ArtObject
 import com.example.whatilike.data.downloadArtwork
 import com.example.whatilike.repository.ArtRepository
+import com.example.whatilike.ui.theme.UltraLightGrey
 import com.google.android.play.integrity.internal.l
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.firestore.FirebaseFirestore
@@ -111,8 +115,12 @@ fun LikedArtworkCard(artwork: ArtObject, onDeleteClicked: () -> Unit) {
     Box(modifier = Modifier
         .fillMaxWidth()
         .padding(8.dp)
-        .background(color = Color.LightGray)
-        .pointerInput(Unit) {
+        .background(color = UltraLightGrey.copy(alpha = 0.6f))
+        .border(
+            border = BorderStroke(0.3.dp, Color.Black) ,
+            shape = RoundedCornerShape(4.dp)
+        )
+        .pointerInput(Unit){
             detectHorizontalDragGestures { _, dragAmount ->
                 if (dragAmount < 0) {
                     offsetX += dragAmount
@@ -134,6 +142,7 @@ fun LikedArtworkCard(artwork: ArtObject, onDeleteClicked: () -> Unit) {
     ) {
         if (!isDeleted) {
             Card(
+                colors = CardDefaults.cardColors(Color.Transparent),
                 modifier = Modifier
                     .offset { IntOffset(animatedOffsetX.roundToInt(), 0) }
                     .fillMaxWidth()

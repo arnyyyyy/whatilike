@@ -14,9 +14,13 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontFamily
+import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.whatilike.cached.AppDatabase
+import com.example.whatilike.cached.UserProfileViewModel
+import com.example.whatilike.cached.UserProfileViewModelFactory
 import com.example.whatilike.screens.GalleryScreen
 import com.example.whatilike.ui.theme.WhatilikeTheme
 import com.google.android.gms.auth.api.signin.GoogleSignIn
@@ -34,6 +38,7 @@ import com.example.whatilike.screens.FavouritesScreen
 import com.example.whatilike.screens.ProfileScreen
 import com.google.firebase.appcheck.FirebaseAppCheck
 import com.google.firebase.appcheck.playintegrity.PlayIntegrityAppCheckProviderFactory
+import com.google.firebase.firestore.FirebaseFirestore
 
 class MainActivity : ComponentActivity() {
     private lateinit var auth: FirebaseAuth
@@ -60,6 +65,13 @@ class MainActivity : ComponentActivity() {
             PlayIntegrityAppCheckProviderFactory.getInstance()
         )
 
+        val userProfileDao = AppDatabase.getInstance(this).userProfileDao()
+        val firestore = FirebaseFirestore.getInstance()
+
+        val viewModelFactory = UserProfileViewModelFactory(userProfileDao, firestore, this)
+        val userProfileViewModel = ViewModelProvider(this, viewModelFactory)[UserProfileViewModel::class.java]
+
+
 //        FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
 //            if (task.isSuccessful) {
 //                val token = task.result
@@ -74,7 +86,7 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             WhatilikeTheme {
-                MainScreen()
+                MainScreen(userProfileViewModel = userProfileViewModel)
             }
         }
     }
@@ -119,16 +131,16 @@ class MainActivity : ComponentActivity() {
     }
 
     @Composable
-    fun MainScreen() {
+    fun MainScreen(userProfileViewModel: UserProfileViewModel) {
         if (currentUser != null) {
-            NavigationGraph(currentUser)
+            NavigationGraph(currentUser, userProfileViewModel)
         } else {
             AuthScreen(onSignInClick = { signInWithGoogle() })
         }
     }
 
     @Composable
-    fun NavigationGraph(user: FirebaseUser?) {
+    fun NavigationGraph(user: FirebaseUser?, userProfileViewModel: UserProfileViewModel) {
         val navController = rememberNavController()
         Scaffold(
             bottomBar = {
@@ -154,7 +166,7 @@ class MainActivity : ComponentActivity() {
             NavHost(navController, startDestination = "favs", Modifier.padding(innerPadding)) {
                 composable("favs") { FavouritesScreen(user = user) }
                 composable("gallery") { GalleryScreen(user = user) }
-                composable("me") { ProfileScreen(user, signOut = { signOut() }) }
+                composable("me") { ProfileScreen(user, signOut = { signOut() }, userProfileViewModel = userProfileViewModel) }
             }
         }
     }
