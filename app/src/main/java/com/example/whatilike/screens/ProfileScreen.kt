@@ -1,7 +1,6 @@
 package com.example.whatilike.screens
 
 import android.graphics.Bitmap
-import com.example.whatilike.cached.*
 
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -41,6 +40,7 @@ import androidx.compose.ui.unit.dp
 import coil.compose.rememberAsyncImagePainter
 import com.google.firebase.auth.FirebaseUser
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import com.example.whatilike.cached.user.UserProfileViewModel
 
 @Composable
 fun ProfileScreen(user: FirebaseUser?, signOut: () -> Unit,

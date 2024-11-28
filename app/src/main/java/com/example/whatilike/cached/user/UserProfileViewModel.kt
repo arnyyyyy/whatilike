@@ -1,4 +1,4 @@
-package com.example.whatilike.cached
+package com.example.whatilike.cached.user
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory

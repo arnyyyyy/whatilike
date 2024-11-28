@@ -22,27 +22,26 @@ import kotlin.math.roundToInt
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.padding
-import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
+import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.google.firebase.auth.FirebaseAuth
+import coil.compose.AsyncImagePainter
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.launch
 
 
 @Composable
-fun GalleryScreen(viewModel: ArtViewModel = viewModel(), user: FirebaseUser?) {
-    val artworks by viewModel.artworks
+fun GalleryScreen(artViewModel: ArtViewModel, user: FirebaseUser?) {
+    val artworks by artViewModel.artworks.collectAsState()
 
     LaunchedEffect(Unit) {
-        viewModel.loadRandomArtworks(15)
+        artViewModel.loadRandomArtworks(15)
     }
 
     if (artworks.isEmpty()) {
@@ -54,7 +53,7 @@ fun GalleryScreen(viewModel: ArtViewModel = viewModel(), user: FirebaseUser?) {
         }
     } else {
         if (user != null) {
-            CardSwiper(viewModel = viewModel, userId = user.uid)
+            CardSwiper(viewModel = artViewModel, userId = user.uid)
         }
     }
 }
@@ -80,14 +79,20 @@ fun addLikedArtworkToFirestore(userId: String, artwork: ArtObject) {
 
 @Composable
 fun CardSwiper(viewModel: ArtViewModel = viewModel(), userId: String) {
-    val artworks by viewModel.artworks
+    val artworks by viewModel.artworks.collectAsState()
     var currentIndex by remember { mutableStateOf(0) }
     val currentArtwork = artworks.getOrNull(currentIndex)
+    val isLoading by viewModel.isLoading.collectAsState()
 
     LaunchedEffect(currentIndex) {
-        if (currentIndex >= artworks.size - 1) {
+        if (currentIndex >= artworks.size - 3) {
+            println("timetoload")
             viewModel.loadRandomArtworks(10)
         }
+    }
+
+    if (isLoading && currentIndex >= artworks.size - 3) {
+        CircularProgressIndicator()
     }
 
     Box(
@@ -101,7 +106,8 @@ fun CardSwiper(viewModel: ArtViewModel = viewModel(), userId: String) {
                 userId = userId,
                 onSwiped = {
                     currentIndex = (currentIndex + 1) % artworks.size
-                }
+                },
+                viewModel = viewModel
             )
         }
     }
@@ -112,7 +118,8 @@ fun CardSwiper(viewModel: ArtViewModel = viewModel(), userId: String) {
 fun ArtworkCard(
     artwork: ArtObject,
     userId: String,
-    onSwiped: () -> Unit
+    onSwiped: () -> Unit,
+    viewModel: ArtViewModel
 ) {
     var offsetX by remember { mutableStateOf(0f) }
     var isFlipped by remember { mutableStateOf(false) }
@@ -140,8 +147,11 @@ fun ArtworkCard(
                     onDragEnd = {
                         onSwiped()
                         if (offsetX > 300f) {
-                            println("ll ${currentArtwork.value.objectID}") // id текущей картины
+                            println("ll ${currentArtwork.value.objectID}")
                             addLikedArtworkToFirestore(userId, currentArtwork.value)
+                        }
+                        viewModel.viewModelScope.launch {
+                            viewModel.removeArtworkFromCache(currentArtwork.value)
                         }
                         offsetX = 0f
                     }
@@ -183,7 +193,8 @@ fun ArtworkCard(
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = currentArtwork.value.period ?: currentArtwork.value.objectDate ?: "",
+                            text = currentArtwork.value.period ?: currentArtwork.value.objectDate
+                            ?: "",
                             fontSize = 20.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color.Black
@@ -192,13 +203,25 @@ fun ArtworkCard(
                     }
                 }
             } else {
-                Image(
-                    painter = rememberImagePainter(data = currentArtwork.value.primaryImage),
-                    contentDescription = currentArtwork.value.title,
-                    modifier = Modifier.fillMaxSize()
+                val painter = rememberImagePainter(
+                    data = artwork.primaryImage,
+                    builder = {
+                        crossfade(true)
+                        placeholder(android.R.drawable.progress_indeterminate_horizontal)
+                        error(android.R.drawable.stat_notify_error)
+                    }
                 )
+                Box(modifier = Modifier.fillMaxSize()) {
+                    Image(
+                        painter = painter,
+                        contentDescription = currentArtwork.value.title,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                    if (painter.state is AsyncImagePainter.State.Loading) {
+                        CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                    }
+                }
             }
         }
     }
 }
-

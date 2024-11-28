@@ -28,7 +28,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
@@ -36,13 +35,11 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
-import androidx.media3.exoplayer.offline.Download
 import coil.compose.rememberImagePainter
 import com.example.whatilike.data.ArtObject
 import com.example.whatilike.data.downloadArtwork
-import com.example.whatilike.repository.ArtRepository
+import com.example.whatilike.repository.ArtRepositoryFactory
 import com.example.whatilike.ui.theme.UltraLightGrey
-import com.google.android.play.integrity.internal.l
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.launch
@@ -50,7 +47,8 @@ import kotlin.math.roundToInt
 
 @Composable
 fun FavouritesScreen(user: FirebaseUser?) {
-    val artRepository = ArtRepository()
+    val context = LocalContext.current
+    val artRepository = remember { ArtRepositoryFactory(context).create() }
     var likedArtworks by remember { mutableStateOf<List<ArtObject>>(emptyList()) }
     val scope = rememberCoroutineScope()
 

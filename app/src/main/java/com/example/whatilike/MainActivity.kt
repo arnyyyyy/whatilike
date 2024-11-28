@@ -18,9 +18,12 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.example.whatilike.cached.AppDatabase
-import com.example.whatilike.cached.UserProfileViewModel
-import com.example.whatilike.cached.UserProfileViewModelFactory
+import com.example.whatilike.cached.artworks.ArtDatabase
+import com.example.whatilike.cached.user.UserDatabase
+import com.example.whatilike.cached.user.UserProfileViewModel
+import com.example.whatilike.cached.user.UserProfileViewModelFactory
+import com.example.whatilike.data.ArtViewModel
+import com.example.whatilike.data.ArtViewModelFactory
 import com.example.whatilike.screens.GalleryScreen
 import com.example.whatilike.ui.theme.WhatilikeTheme
 import com.google.android.gms.auth.api.signin.GoogleSignIn
@@ -65,11 +68,17 @@ class MainActivity : ComponentActivity() {
             PlayIntegrityAppCheckProviderFactory.getInstance()
         )
 
-        val userProfileDao = AppDatabase.getInstance(this).userProfileDao()
+
         val firestore = FirebaseFirestore.getInstance()
 
-        val viewModelFactory = UserProfileViewModelFactory(userProfileDao, firestore, this)
-        val userProfileViewModel = ViewModelProvider(this, viewModelFactory)[UserProfileViewModel::class.java]
+        val userProfileDao = UserDatabase.getInstance(this).userProfileDao()
+        val userViewModelFactory = UserProfileViewModelFactory( userProfileDao = userProfileDao, firestore, this)
+        val userProfileViewModel = ViewModelProvider(this, userViewModelFactory)[UserProfileViewModel::class.java]
+
+        val artworkDao =  ArtDatabase.getInstance(this).cachedArtworkDao()
+        val artworkViewModelFactory = ArtViewModelFactory(dao = artworkDao, context = this)
+        val artViewModel = ViewModelProvider(this, artworkViewModelFactory)[ArtViewModel::class.java]
+
 
 
 //        FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
@@ -86,7 +95,8 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             WhatilikeTheme {
-                MainScreen(userProfileViewModel = userProfileViewModel)
+                MainScreen(userProfileViewModel = userProfileViewModel,
+                    artViewModel = artViewModel)
             }
         }
     }
@@ -131,16 +141,16 @@ class MainActivity : ComponentActivity() {
     }
 
     @Composable
-    fun MainScreen(userProfileViewModel: UserProfileViewModel) {
+    fun MainScreen(userProfileViewModel: UserProfileViewModel, artViewModel: ArtViewModel) {
         if (currentUser != null) {
-            NavigationGraph(currentUser, userProfileViewModel)
+            NavigationGraph(currentUser, userProfileViewModel, artViewModel)
         } else {
             AuthScreen(onSignInClick = { signInWithGoogle() })
         }
     }
 
     @Composable
-    fun NavigationGraph(user: FirebaseUser?, userProfileViewModel: UserProfileViewModel) {
+    fun NavigationGraph(user: FirebaseUser?, userProfileViewModel: UserProfileViewModel, artViewModel: ArtViewModel) {
         val navController = rememberNavController()
         Scaffold(
             bottomBar = {
@@ -165,8 +175,8 @@ class MainActivity : ComponentActivity() {
         ) { innerPadding ->
             NavHost(navController, startDestination = "favs", Modifier.padding(innerPadding)) {
                 composable("favs") { FavouritesScreen(user = user) }
-                composable("gallery") { GalleryScreen(user = user) }
-                composable("me") { ProfileScreen(user, signOut = { signOut() }, userProfileViewModel = userProfileViewModel) }
+                composable("gallery") { GalleryScreen(user = user, artViewModel= artViewModel) }
+                composable("me") { ProfileScreen(user = user, signOut = { signOut() }, userProfileViewModel = userProfileViewModel) }
             }
         }
     }

@@ -1,4 +1,4 @@
-package com.example.whatilike.cached
+package com.example.whatilike.cached.user
 
 import androidx.room.Dao
 import androidx.room.Insert
