@@ -27,10 +27,3 @@ abstract class UserDatabase : RoomDatabase() {
         }
     }
 }
-
-
-fun provideDatabase(context: Context): UserDatabase {
-    return Room.databaseBuilder(context, UserDatabase::class.java, "app_database")
-        .fallbackToDestructiveMigration()
-        .build()
-}

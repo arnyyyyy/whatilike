@@ -27,9 +27,3 @@ abstract class ArtDatabase : RoomDatabase() {
         }
     }
 }
-
-fun provideArtDatabase(context: Context): ArtDatabase {
-    return Room.databaseBuilder(context, ArtDatabase::class.java, "art_database")
-        .fallbackToDestructiveMigration()
-        .build()
-}

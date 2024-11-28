@@ -8,7 +8,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.whatilike.cached.artworks.CachedArtworkDao
-import com.example.whatilike.repository.ArtRepository
 import kotlinx.coroutines.launch
 
 class ArtViewModel(context: Context, dao: CachedArtworkDao) : ViewModel() {
@@ -31,7 +30,7 @@ class ArtViewModel(context: Context, dao: CachedArtworkDao) : ViewModel() {
         viewModelScope.launch {
             try {
                 val result = repository.getRandomArtworks(count)
-                _artworks.value = _artworks.value + result
+                _artworks.value += result
                 Log.d("ArtViewModel", "Total artworks loaded: ${_artworks.value.size}")
             } catch (e: Exception) {
                 Log.e("ArtViewModel", "Failed to load artworks", e)

@@ -157,7 +157,7 @@ fun ProfileScreen(user: FirebaseUser?, signOut: () -> Unit,
             }
 
             Row(horizontalArrangement = Arrangement.End) {
-                Box() {}
+                Box {}
                 IconButton(
                     onClick = {
                         isEditing = !isEditing

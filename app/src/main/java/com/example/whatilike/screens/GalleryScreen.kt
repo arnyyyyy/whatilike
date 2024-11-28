@@ -80,7 +80,7 @@ fun addLikedArtworkToFirestore(userId: String, artwork: ArtObject) {
 @Composable
 fun CardSwiper(viewModel: ArtViewModel = viewModel(), userId: String) {
     val artworks by viewModel.artworks
-    var currentIndex by remember { mutableStateOf(0) }
+    var currentIndex by remember { mutableIntStateOf(0) }
     val currentArtwork = artworks.getOrNull(currentIndex)
 
     LaunchedEffect(currentIndex) {
@@ -120,19 +120,19 @@ fun ArtworkCard(
     onSwiped: () -> Unit,
     viewModel: ArtViewModel
 ) {
-    var offsetX by remember { mutableStateOf(0f) }
+    var offsetX by remember { mutableFloatStateOf(0f) }
     var isFlipped by remember { mutableStateOf(false) }
 
     val currentArtwork = rememberUpdatedState(artwork)
 
     val rotation by animateFloatAsState(
         targetValue = if (isFlipped) 180f else 0f,
-        animationSpec = tween(durationMillis = 300)
+        animationSpec = tween(durationMillis = 300), label = ""
     )
 
     val animatedOffsetX by animateFloatAsState(
         targetValue = offsetX,
-        animationSpec = tween(durationMillis = 300)
+        animationSpec = tween(durationMillis = 300), label = ""
     )
 
     println("SOS: Image URL - ${currentArtwork.value.primaryImage}, ID - ${currentArtwork.value.objectID}")

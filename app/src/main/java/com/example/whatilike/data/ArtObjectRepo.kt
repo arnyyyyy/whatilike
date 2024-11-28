@@ -1,4 +1,4 @@
-package com.example.whatilike.repository
+package com.example.whatilike.data
 
 import android.content.Context
 import android.util.Log
@@ -7,8 +7,6 @@ import coil.request.ImageRequest
 import com.example.whatilike.cached.artworks.ArtDatabase
 import com.example.whatilike.cached.artworks.CachedArtwork
 import com.example.whatilike.cached.artworks.CachedArtworkDao
-import com.example.whatilike.data.ApiDatabase
-import com.example.whatilike.data.ArtObject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -64,7 +62,7 @@ class ArtRepository(private val context: Context, private val cachedArtworkDao: 
             return@withContext combinedArtworks
         }
 
-    fun cacheAndPreloadImages(newArtworks: List<ArtObject>) {
+    private fun cacheAndPreloadImages(newArtworks: List<ArtObject>) {
         val cachedArtworks = newArtworks.map { artwork ->
             CachedArtwork(
                 objectID = artwork.objectID,

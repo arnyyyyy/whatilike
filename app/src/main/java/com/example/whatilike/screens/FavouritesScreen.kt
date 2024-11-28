@@ -1,6 +1,5 @@
 package com.example.whatilike.screens
 
-import android.widget.Toast
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
@@ -35,10 +34,10 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
-import coil.compose.rememberImagePainter
+import coil.compose.rememberAsyncImagePainter
 import com.example.whatilike.data.ArtObject
 import com.example.whatilike.data.downloadArtwork
-import com.example.whatilike.repository.ArtRepositoryFactory
+import com.example.whatilike.data.ArtRepositoryFactory
 import com.example.whatilike.ui.theme.UltraLightGrey
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.firestore.FirebaseFirestore
@@ -99,7 +98,7 @@ fun FavouritesScreen(user: FirebaseUser?) {
 
 @Composable
 fun LikedArtworkCard(artwork: ArtObject, onDeleteClicked: () -> Unit) {
-    var offsetX by remember { mutableStateOf(0f) }
+    var offsetX by remember { mutableFloatStateOf(0f) }
     var isSwipedLeft by remember { mutableStateOf(false) }
     var isDeleted by remember { mutableStateOf(false) }
     var showDialog by remember { mutableStateOf(false) }
@@ -107,7 +106,7 @@ fun LikedArtworkCard(artwork: ArtObject, onDeleteClicked: () -> Unit) {
 
     val animatedOffsetX by animateFloatAsState(
         targetValue = if (isDeleted) -500f else offsetX,
-        animationSpec = tween(durationMillis = 300)
+        animationSpec = tween(durationMillis = 300), label = ""
     )
 
     Box(modifier = Modifier
@@ -122,10 +121,10 @@ fun LikedArtworkCard(artwork: ArtObject, onDeleteClicked: () -> Unit) {
             detectHorizontalDragGestures { _, dragAmount ->
                 if (dragAmount < 0) {
                     offsetX += dragAmount
-                    if (offsetX < -150f) {
-                        isSwipedLeft = true
+                    isSwipedLeft = if (offsetX < -150f) {
+                        true
                     } else {
-                        isSwipedLeft = false
+                        false
                     }
                 } else if (dragAmount > 0) {
                     if (offsetX > 0) {
@@ -156,7 +155,7 @@ fun LikedArtworkCard(artwork: ArtObject, onDeleteClicked: () -> Unit) {
                     )
 
                     Image(
-                        painter = rememberImagePainter(artwork.primaryImage),
+                        painter = rememberAsyncImagePainter(artwork.primaryImage),
                         contentDescription = artwork.title,
                         modifier = Modifier
                             .fillMaxWidth()
@@ -202,7 +201,7 @@ fun LikedArtworkCard(artwork: ArtObject, onDeleteClicked: () -> Unit) {
                         .padding(top = 48.dp)
                 ) {
                     Image(
-                        painter = rememberImagePainter(artwork.primaryImage),
+                        painter = rememberAsyncImagePainter(artwork.primaryImage),
                         contentDescription = artwork.title,
                         modifier = Modifier
                             .fillMaxWidth()
