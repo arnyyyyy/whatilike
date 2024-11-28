@@ -38,10 +38,10 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun GalleryScreen(artViewModel: ArtViewModel, user: FirebaseUser?) {
-    val artworks by artViewModel.artworks.collectAsState()
+    val artworks by artViewModel.artworks
 
     LaunchedEffect(Unit) {
-        artViewModel.loadRandomArtworks(15)
+        artViewModel.loadRandomArtworks(15, 15 * 2)
     }
 
     if (artworks.isEmpty()) {
@@ -79,19 +79,18 @@ fun addLikedArtworkToFirestore(userId: String, artwork: ArtObject) {
 
 @Composable
 fun CardSwiper(viewModel: ArtViewModel = viewModel(), userId: String) {
-    val artworks by viewModel.artworks.collectAsState()
+    val artworks by viewModel.artworks
     var currentIndex by remember { mutableStateOf(0) }
     val currentArtwork = artworks.getOrNull(currentIndex)
-    val isLoading by viewModel.isLoading.collectAsState()
 
     LaunchedEffect(currentIndex) {
         if (currentIndex >= artworks.size - 3) {
             println("timetoload")
-            viewModel.loadRandomArtworks(10)
+            viewModel.loadRandomArtworks(10, currentIndex + 10)
         }
     }
 
-    if (isLoading && currentIndex >= artworks.size - 3) {
+    if (viewModel.isLoading.value && currentIndex >= artworks.size - 3) {
         CircularProgressIndicator()
     }
 
@@ -153,6 +152,7 @@ fun ArtworkCard(
                         viewModel.viewModelScope.launch {
                             viewModel.removeArtworkFromCache(currentArtwork.value)
                         }
+
                         offsetX = 0f
                     }
                 ) { change, dragAmount ->
