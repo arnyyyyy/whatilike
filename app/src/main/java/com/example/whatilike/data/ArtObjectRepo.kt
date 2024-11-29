@@ -48,18 +48,9 @@ class ArtRepository(private val context: Context, private val cachedArtworkDao: 
                 cacheAndPreloadImages(newArtworks)
             }
 
-            val combinedArtworks = cachedArtworks.map { cached ->
-                ArtObject(
-                    objectID = cached.objectID,
-                    title = cached.title,
-                    artistDisplayName = cached.artistDisplayName,
-                    primaryImage = cached.primaryImage,
-                    primaryImageSmall = cached.primaryImageSmall
-                )
-            } + newArtworks
+            Log.d("ArtRepository", "Returning loaded artworks: ${newArtworks.size}")
 
-            Log.d("ArtRepository", "Returning combined artworks: ${combinedArtworks.size}")
-            return@withContext combinedArtworks
+            return@withContext newArtworks
         }
 
     private fun cacheAndPreloadImages(newArtworks: List<ArtObject>) {

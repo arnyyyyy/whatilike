@@ -21,8 +21,10 @@ class ArtViewModel(context: Context, dao: CachedArtworkDao) : ViewModel() {
     fun removeArtworkFromCache(artwork: ArtObject) {
         viewModelScope.launch {
             repository.removeArtworkFromCache(artwork)
+            _artworks.value = _artworks.value.filterNot { it.objectID == artwork.objectID }
         }
     }
+
 
     fun loadRandomArtworks(count: Int) {
         _isLoading.value = true
@@ -30,7 +32,7 @@ class ArtViewModel(context: Context, dao: CachedArtworkDao) : ViewModel() {
         viewModelScope.launch {
             try {
                 val result = repository.getRandomArtworks(count)
-                _artworks.value += result
+                _artworks.value = (_artworks.value + result).distinctBy { it.objectID }
                 Log.d("ArtViewModel", "Total artworks loaded: ${_artworks.value.size}")
             } catch (e: Exception) {
                 Log.e("ArtViewModel", "Failed to load artworks", e)
