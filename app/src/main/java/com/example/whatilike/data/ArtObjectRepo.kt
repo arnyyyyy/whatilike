@@ -18,9 +18,9 @@ class ArtRepository(private val context: Context, private val cachedArtworkDao: 
 
 
     suspend fun removeArtworkFromCache(artwork: ArtObject) {
-        Log.d("ArtRepository", "Art repository cached size: ${cachedArtworkDao.getArtworkCount()}")
-
         withContext(Dispatchers.IO) {
+            Log.d("ArtRepository", "Art repository cached size: ${cachedArtworkDao.getArtworkCount()}")
+
             val cachedArtwork = CachedArtwork(
                 objectID = artwork.objectID,
                 title = artwork.title,
@@ -29,10 +29,10 @@ class ArtRepository(private val context: Context, private val cachedArtworkDao: 
                 primaryImageSmall = artwork.primaryImageSmall ?: ""
             )
             cachedArtworkDao.deleteArtwork(cachedArtwork)
-        }
-        Log.d("ArtRepository", "Artwork removed from cache: ${artwork.objectID}")
-        Log.d("ArtRepository", "Art repository cached size: ${cachedArtworkDao.getArtworkCount()}")
+            Log.d("ArtRepository", "Artwork removed from cache: ${artwork.objectID}")
+            Log.d("ArtRepository", "Art repository cached size: ${cachedArtworkDao.getArtworkCount()}")
 
+        }
     }
 
 

@@ -33,6 +33,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImagePainter
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 
@@ -149,7 +150,10 @@ fun ArtworkCard(
                             println("ll ${currentArtwork.value.objectID}")
                             addLikedArtworkToFirestore(userId, currentArtwork.value)
                         }
-                        viewModel.viewModelScope.launch {
+//                        viewModel.viewModelScope.launch {
+//                            viewModel.removeArtworkFromCache(currentArtwork.value)
+//                        }
+                        viewModel.viewModelScope.launch(Dispatchers.IO) {
                             viewModel.removeArtworkFromCache(currentArtwork.value)
                         }
 
