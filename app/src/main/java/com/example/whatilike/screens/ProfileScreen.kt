@@ -81,7 +81,7 @@ fun ProfileScreen(user: FirebaseUser?, signOut: () -> Unit,
         if (isLoading) {
             Text(text = "Loading...", fontFamily = FontFamily.Monospace)
         } else {
-            Spacer(modifier = Modifier.height(100.dp))
+            Spacer(modifier = Modifier.height(50.dp))
 
             Text(
                 text = "Hello, ${userProfile?.nickname ?: "User"}!",

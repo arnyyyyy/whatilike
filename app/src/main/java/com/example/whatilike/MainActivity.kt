@@ -90,7 +90,7 @@ class MainActivity : ComponentActivity() {
 //            }
 //        }
 
-        createNotificationChannels()
+//        createNotificationChannels()
         configureGoogleSignIn()
 
         setContent {
@@ -118,31 +118,32 @@ class MainActivity : ComponentActivity() {
         googleSignInClient = GoogleSignIn.getClient(this, gso)
     }
 
-    private fun createNotificationChannels() {
-        val channels = listOf(
-            NotificationChannel(
-                "channel1_id",
-                "Channel 1",
-                NotificationManager.IMPORTANCE_HIGH
-            ).apply {
-                description = "This is Channel 1"
-            },
-            NotificationChannel(
-                "channel2_id",
-                "Channel 2",
-                NotificationManager.IMPORTANCE_LOW
-            ).apply {
-                description = "This is Channel 2"
-            }
-        )
-
-        val manager = getSystemService(NotificationManager::class.java)
-        channels.forEach { manager.createNotificationChannel(it) }
-    }
+//    private fun createNotificationChannels() {
+//        val channels = listOf(
+//            NotificationChannel(
+//                "channel1_id",
+//                "Channel 1",
+//                NotificationManager.IMPORTANCE_HIGH
+//            ).apply {
+//                description = "This is Channel 1"
+//            },
+//            NotificationChannel(
+//                "channel2_id",
+//                "Channel 2",
+//                NotificationManager.IMPORTANCE_LOW
+//            ).apply {
+//                description = "This is Channel 2"
+//            }
+//        )
+//
+//        val manager = getSystemService(NotificationManager::class.java)
+//        channels.forEach { manager.createNotificationChannel(it) }
+//    }
 
     @Composable
     fun MainScreen(userProfileViewModel: UserProfileViewModel, artViewModel: ArtViewModel) {
         if (currentUser != null) {
+            userProfileViewModel.initializeUserProfileFromFirebase()
             NavigationGraph(currentUser, userProfileViewModel, artViewModel)
         } else {
             AuthScreen(onSignInClick = { signInWithGoogle() })

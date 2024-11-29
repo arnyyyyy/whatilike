@@ -11,7 +11,7 @@ android {
 
     defaultConfig {
         applicationId = "com.example.whatilike"
-        minSdk = 29
+        minSdk = 25
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"

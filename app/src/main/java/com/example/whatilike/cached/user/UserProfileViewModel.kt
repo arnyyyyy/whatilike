@@ -17,6 +17,7 @@ import kotlinx.coroutines.launch
 import java.io.File
 import java.io.FileOutputStream
 import android.content.Context
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
@@ -33,6 +34,35 @@ class UserProfileViewModel(
 
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading
+
+    fun initializeUserProfileFromFirebase() {
+        viewModelScope.launch {
+            _isLoading.value = true
+            try {
+                val firebaseUser = FirebaseAuth.getInstance().currentUser
+                firebaseUser?.let { user ->
+                    val userId = user.uid
+                    val nickname = user.displayName ?: "User"
+                    val photoUrl = user.photoUrl?.toString() ?: ""
+                    val document = firestore.collection("users").document(userId).get().await()
+                    if (!document.exists()) {
+                        val newProfile = UserProfile(
+                            uid = userId,
+                            nickname = nickname,
+                            photoUrl = photoUrl
+                        )
+                        firestore.collection("users").document(userId).set(newProfile).await()
+                    }
+                    loadUserProfile(userId)
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+
 
     fun loadUserProfile(userId: String) {
         viewModelScope.launch {
