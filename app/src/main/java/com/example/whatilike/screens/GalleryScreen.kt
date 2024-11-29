@@ -1,5 +1,6 @@
 package com.example.whatilike.screens
 
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import com.example.whatilike.data.ArtViewModel
@@ -35,6 +36,7 @@ import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlin.math.absoluteValue
 
 
 @Composable
@@ -121,7 +123,6 @@ fun ArtworkCard(
     onSwiped: () -> Unit,
     viewModel: ArtViewModel
 ) {
-    var offsetX by remember { mutableFloatStateOf(0f) }
     var isFlipped by remember { mutableStateOf(false) }
 
     val currentArtwork = rememberUpdatedState(artwork)
@@ -131,37 +132,58 @@ fun ArtworkCard(
         animationSpec = tween(durationMillis = 300), label = ""
     )
 
-    val animatedOffsetX by animateFloatAsState(
-        targetValue = offsetX,
-        animationSpec = tween(durationMillis = 300), label = ""
-    )
+    val offsetX = remember { Animatable(0f) }
+    val maxTiltAngle = 3f
+    val maxOffset = 1000f
+    val tiltAngle = (offsetX.value / maxOffset) * maxTiltAngle
+    val alpha_ = 1f - (offsetX.value.absoluteValue / maxOffset).coerceIn(0f, 1f)
 
     println("SOS: Image URL - ${currentArtwork.value.primaryImage}, ID - ${currentArtwork.value.objectID}")
+
+
+    val coroutineScope = rememberCoroutineScope()
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .offset { IntOffset(animatedOffsetX.roundToInt(), 0) }
+            .graphicsLayer {
+                rotationZ = tiltAngle
+                alpha = alpha_
+            }
+            .offset { IntOffset((offsetX.value * 1.2).roundToInt(), 0) }
             .pointerInput(Unit) {
                 detectDragGestures(
                     onDragEnd = {
-                        onSwiped()
-                        if (offsetX > 300f) {
-                            println("ll ${currentArtwork.value.objectID}")
-                            addLikedArtworkToFirestore(userId, currentArtwork.value)
+                        val threshold = 300f
+                        if (offsetX.value.absoluteValue > threshold) {
+                            coroutineScope.launch {
+                                offsetX.animateTo(
+                                    targetValue = if (offsetX.value > 0) 600f else -600f,
+                                    animationSpec = tween(durationMillis = 200)
+                                )
+                                onSwiped()
+                                if (offsetX.value > 0) {
+                                    addLikedArtworkToFirestore(userId, currentArtwork.value)
+                                }
+                                viewModel.viewModelScope.launch(Dispatchers.IO) {
+                                    viewModel.removeArtworkFromCache(currentArtwork.value)
+                                }
+                                offsetX.snapTo(0f)
+                            }
+                        } else {
+                            coroutineScope.launch {
+                                offsetX.animateTo(
+                                    targetValue = 0f,
+                                    animationSpec = tween(durationMillis = 300)
+                                )
+                            }
                         }
-//                        viewModel.viewModelScope.launch {
-//                            viewModel.removeArtworkFromCache(currentArtwork.value)
-//                        }
-                        viewModel.viewModelScope.launch(Dispatchers.IO) {
-                            viewModel.removeArtworkFromCache(currentArtwork.value)
-                        }
-
-                        offsetX = 0f
                     }
                 ) { change, dragAmount ->
                     change.consume()
-                    offsetX += dragAmount.x
+                    coroutineScope.launch {
+                        offsetX.snapTo(offsetX.value + dragAmount.x)
+                    }
                 }
             }
             .clickable { isFlipped = !isFlipped }
