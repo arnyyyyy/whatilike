@@ -19,6 +19,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.sharp.Add
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
@@ -34,6 +35,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import coil.Coil
 import coil.compose.rememberAsyncImagePainter
 import com.example.whatilike.data.ArtObject
 import com.example.whatilike.data.downloadArtwork
@@ -41,7 +43,10 @@ import com.example.whatilike.data.ArtRepositoryFactory
 import com.example.whatilike.ui.theme.UltraLightGrey
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withContext
 import kotlin.math.roundToInt
 
 @Composable
@@ -49,17 +54,21 @@ fun FavouritesScreen(user: FirebaseUser?) {
     val context = LocalContext.current
     val artRepository = remember { ArtRepositoryFactory(context).create() }
     var likedArtworks by remember { mutableStateOf<List<ArtObject>>(emptyList()) }
+    var isLoading by remember { mutableStateOf(true) }
     val scope = rememberCoroutineScope()
 
     LaunchedEffect(user?.uid) {
         user?.uid?.let { userId ->
-            fetchLikedArtworkIds(userId) { artworkIds ->
-                scope.launch {
-                    val artworks = artRepository.getArtworksByIds(artworkIds)
-                    likedArtworks = artworks
-                }
+            scope.launch {
+                val artworkIds = fetchLikedArtworkIds(userId)
+                likedArtworks = artRepository.getArtworksByIds(artworkIds)
+                isLoading = false
             }
         }
+    }
+
+    if (isLoading) {
+        CircularProgressIndicator()
     }
 
     Column(modifier = Modifier.fillMaxSize()) {
@@ -155,7 +164,10 @@ fun LikedArtworkCard(artwork: ArtObject, onDeleteClicked: () -> Unit) {
                     )
 
                     Image(
-                        painter = rememberAsyncImagePainter(artwork.primaryImage),
+                        painter = rememberAsyncImagePainter(
+                            model = artwork.primaryImage,
+                            imageLoader = Coil.imageLoader(context)
+                        ),
                         contentDescription = artwork.title,
                         modifier = Modifier
                             .fillMaxWidth()
@@ -276,19 +288,13 @@ fun deleteArtworkFromLiked(userId: String, artworkId: Int) {
         }
 }
 
-fun fetchLikedArtworkIds(userId: String, onIdsFetched: (List<Int>) -> Unit) {
-    val db = FirebaseFirestore.getInstance()
-    db.collection("users")
+
+suspend fun fetchLikedArtworkIds(userId: String): List<Int> = withContext(Dispatchers.IO) {
+    val result = FirebaseFirestore.getInstance()
+        .collection("users")
         .document(userId)
         .collection("liked_artworks")
         .get()
-        .addOnSuccessListener { result ->
-            val artworkIds = result.documents.mapNotNull { document ->
-                document.getLong("artworkId")?.toInt()
-            }
-            onIdsFetched(artworkIds)
-        }
-        .addOnFailureListener { exception ->
-            println("Error fetching liked artwork IDs: $exception")
-        }
+        .await()
+    return@withContext result.documents.mapNotNull { it.getLong("artworkId")?.toInt() }
 }

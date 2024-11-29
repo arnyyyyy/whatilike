@@ -103,17 +103,15 @@ class ArtRepository(private val context: Context, private val cachedArtworkDao: 
         }
 
 
-    suspend fun getArtworksByIds(ids: List<Int>): List<ArtObject> = withContext(Dispatchers.IO) {
-        ids.mapNotNull { id ->
-            val response = api.getObjectByID(id)
-            if (response.isSuccessful && response.body() != null) {
-                response.body()
-            } else {
-                Log.e("ArtRepository", "Failed to fetch artwork with ID $id: ${response.code()}")
-                null
+    suspend fun getArtworksByIds(ids: List<Int>): List<ArtObject> = withContext(
+        Dispatchers.IO) {
+        ids.map { id ->
+            async {
+                api.getObjectByID(id).body()
             }
-        }
+        }.awaitAll().filterNotNull()
     }
+
 }
 
 class ArtRepositoryFactory(
