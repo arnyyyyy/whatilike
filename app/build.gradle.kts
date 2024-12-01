@@ -56,6 +56,7 @@ dependencies {
     implementation(libs.work.runtime.ktx)
     implementation(libs.identity.jvm)
     implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.work.testing)
     ksp(libs.androidx.room.compiler)
     implementation(libs.androidx.room.ktx.v251)
 
@@ -68,6 +69,7 @@ dependencies {
     implementation("com.google.accompanist:accompanist-pager:0.36.0")
     implementation("com.google.accompanist:accompanist-pager-indicators:0.36.0")
     implementation("com.google.firebase:firebase-appcheck-playintegrity")
+
 
 
     implementation(libs.gms.play.services.auth)

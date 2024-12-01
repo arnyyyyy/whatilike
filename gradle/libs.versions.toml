@@ -30,6 +30,7 @@ runtimeLivedata = "1.7.4"
 media3Exoplayer = "1.4.1"
 identityJvm = "202411.1"
 workRuntimeKtxVersion = "2.8.1"
+workTesting = "2.9.0"
 
 
 [libraries]
@@ -72,6 +73,7 @@ androidx-media3-exoplayer = { group = "androidx.media3", name = "media3-exoplaye
 
 identity-jvm = { group = "com.android.identity", name = "identity-jvm", version.ref = "identityJvm" }
 work-runtime-ktx = { module = "androidx.work:work-runtime-ktx", version.ref = "workRuntimeKtxVersion" }
+androidx-work-testing = { group = "androidx.work", name = "work-testing", version.ref = "workTesting" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
