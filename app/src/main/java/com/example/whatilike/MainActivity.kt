@@ -52,7 +52,9 @@ import com.google.firebase.auth.GoogleAuthProvider
 
 import com.example.whatilike.screens.AuthScreen
 import com.example.whatilike.screens.FavouritesScreen
+import com.example.whatilike.screens.NavigationGraph
 import com.example.whatilike.screens.ProfileScreen
+import com.example.whatilike.screens.SplashScreen
 import com.google.firebase.appcheck.FirebaseAppCheck
 import com.google.firebase.appcheck.playintegrity.PlayIntegrityAppCheckProviderFactory
 import com.google.firebase.firestore.FirebaseFirestore
@@ -87,16 +89,7 @@ class MainActivity : ComponentActivity() {
 
         val firestore = FirebaseFirestore.getInstance()
 
-        val userProfileDao = UserDatabase.getInstance(this).userProfileDao()
-        val userViewModelFactory =
-            UserProfileViewModelFactory(userProfileDao = userProfileDao, firestore, this)
-        val userProfileViewModel =
-            ViewModelProvider(this, userViewModelFactory)[UserProfileViewModel::class.java]
-
-        val artworkDao = ArtDatabase.getInstance(this).cachedArtworkDao()
-        val artworkViewModelFactory = ArtViewModelFactory(dao = artworkDao, context = this)
-        val artViewModel =
-            ViewModelProvider(this, artworkViewModelFactory)[ArtViewModel::class.java]
+        val (userProfileViewModel, artViewModel) = initializeViewModels()
 
 
 //        FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
@@ -113,9 +106,22 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             WhatilikeTheme {
+                var isLoading by remember { mutableStateOf(true) }
+
+                LaunchedEffect(Unit) {
+                    artViewModel.loadRandomArtworks(10)
+                    delay(3000)
+                    isLoading = false
+                }
+
                 SplashScreen(
-                    userProfileViewModel = userProfileViewModel,
-                    artViewModel = artViewModel
+                    isLoading = isLoading,
+                    onLoadingComplete = {
+                        MainScreen(
+                            userProfileViewModel = userProfileViewModel,
+                            artViewModel = artViewModel
+                        )
+                    }
                 )
             }
         }
@@ -128,6 +134,21 @@ class MainActivity : ComponentActivity() {
 
     private fun signOut() {
         auth.signOut()
+    }
+
+    fun initializeViewModels(): Pair<UserProfileViewModel, ArtViewModel> {
+        val userProfileDao = UserDatabase.getInstance(this).userProfileDao()
+        val userViewModelFactory =
+            UserProfileViewModelFactory(userProfileDao = userProfileDao, FirebaseFirestore.getInstance(), this)
+        val userProfileViewModel =
+            ViewModelProvider(this, userViewModelFactory)[UserProfileViewModel::class.java]
+
+        val artworkDao = ArtDatabase.getInstance(this).cachedArtworkDao()
+        val artworkViewModelFactory = ArtViewModelFactory(dao = artworkDao, context = this)
+        val artViewModel =
+            ViewModelProvider(this, artworkViewModelFactory)[ArtViewModel::class.java]
+
+        return userProfileViewModel to artViewModel
     }
 
     private fun configureGoogleSignIn() {
@@ -164,51 +185,9 @@ class MainActivity : ComponentActivity() {
     fun MainScreen(userProfileViewModel: UserProfileViewModel, artViewModel: ArtViewModel) {
         if (currentUser != null) {
             userProfileViewModel.initializeUserProfileFromFirebase()
-            NavigationGraph(currentUser, userProfileViewModel, artViewModel)
+            NavigationGraph(currentUser, userProfileViewModel, artViewModel, { signOut() })
         } else {
             AuthScreen(onSignInClick = { signInWithGoogle() })
-        }
-    }
-
-    @Composable
-    fun NavigationGraph(
-        user: FirebaseUser?,
-        userProfileViewModel: UserProfileViewModel,
-        artViewModel: ArtViewModel
-    ) {
-        val navController = rememberNavController()
-        Scaffold(
-            bottomBar = {
-                NavigationBar {
-                    NavigationBarItem(
-                        icon = { Text("Favs", fontFamily = FontFamily.Monospace) },
-                        selected = false,
-                        onClick = { navController.navigate("favs") }
-                    )
-                    NavigationBarItem(
-                        icon = { Text("Gallery", fontFamily = FontFamily.Monospace) },
-                        selected = false,
-                        onClick = { navController.navigate("gallery") }
-                    )
-                    NavigationBarItem(
-                        icon = { Text("Me", fontFamily = FontFamily.Monospace) },
-                        selected = false,
-                        onClick = { navController.navigate("me") }
-                    )
-                }
-            }
-        ) { innerPadding ->
-            NavHost(navController, startDestination = "gallery", Modifier.padding(innerPadding)) {
-                composable("favs") { FavouritesScreen(user = user) }
-                composable("gallery") { GalleryScreen(user = user, artViewModel = artViewModel) }
-                composable("me") {
-                    ProfileScreen(
-                        user = user,
-                        signOut = { signOut() },
-                        userProfileViewModel = userProfileViewModel
-                    )
-                }
-            }
         }
     }
 
@@ -230,50 +209,6 @@ class MainActivity : ComponentActivity() {
             }
         } catch (e: ApiException) {
             println("Google sign-in failed: ${e.message}")
-        }
-    }
-
-    @Composable
-    fun SplashScreen(userProfileViewModel: UserProfileViewModel, artViewModel: ArtViewModel) {
-        var isLoading by remember { mutableStateOf(true) }
-
-        LaunchedEffect(Unit) {
-            artViewModel.loadRandomArtworks(10)
-            delay(3000)
-            isLoading = false
-        }
-
-        if (isLoading) {
-            SplashContent()
-        } else {
-            MainScreen(userProfileViewModel, artViewModel)
-        }
-    }
-
-
-    @Composable
-    fun SplashContent() {
-        Box(modifier = Modifier.fillMaxSize()) {
-            Image(
-                painter = painterResource(
-                    id = R.drawable.dali
-                ),
-                contentDescription = null,
-                modifier = Modifier.fillMaxSize(),
-                contentScale = ContentScale.Crop,
-            )
-            Column(
-                modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(
-                    text = "What I Like?",
-                    fontFamily = FontFamily.Monospace,
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold,
-                )
-            }
         }
     }
 }
