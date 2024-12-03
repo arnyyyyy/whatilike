@@ -11,6 +11,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.withContext
+import kotlin.random.Random
 
 class ArtRepository(private val context: Context, private val cachedArtworkDao: CachedArtworkDao) {
     private val api = ApiDatabase.apiService
@@ -78,9 +79,9 @@ class ArtRepository(private val context: Context, private val cachedArtworkDao: 
 
     private suspend fun fetchArtworksFromApi(count: Int): List<ArtObject> =
         withContext(Dispatchers.IO) {
-            val response = api.getAllObjectIDs()
+            val response = api.getObjectByID(1)
             if (response.isSuccessful && response.body() != null) {
-                val ids = response.body()?.objectIDs ?: emptyList()
+                val ids = List(count) { Random.nextInt(0, 400000 + 1) }
                 Log.d("ArtRepository", "Total Object IDs fetched: ${ids.size}")
 
                 val randomIds = ids.shuffled().take(count)
