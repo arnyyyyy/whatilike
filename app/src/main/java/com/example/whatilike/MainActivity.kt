@@ -198,7 +198,7 @@ class MainActivity : ComponentActivity() {
                 }
             }
         ) { innerPadding ->
-            NavHost(navController, startDestination = "favs", Modifier.padding(innerPadding)) {
+            NavHost(navController, startDestination = "gallery", Modifier.padding(innerPadding)) {
                 composable("favs") { FavouritesScreen(user = user) }
                 composable("gallery") { GalleryScreen(user = user, artViewModel = artViewModel) }
                 composable("me") {
@@ -238,8 +238,8 @@ class MainActivity : ComponentActivity() {
         var isLoading by remember { mutableStateOf(true) }
 
         LaunchedEffect(Unit) {
-            artViewModel.loadRandomArtworks(15)
-            delay(2000)
+            artViewModel.loadRandomArtworks(10)
+            delay(3000)
             isLoading = false
         }
 
