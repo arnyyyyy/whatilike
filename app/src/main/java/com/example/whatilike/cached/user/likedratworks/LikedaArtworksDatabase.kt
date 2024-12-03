@@ -4,21 +4,24 @@ import androidx.room.Database
 import androidx.room.RoomDatabase
 import android.content.Context
 import androidx.room.Room
+import androidx.room.TypeConverters
 
-@Database(entities = [UserProfile::class], version = 1)
-abstract class UserDatabase : RoomDatabase() {
-    abstract fun userProfileDao(): UserProfileDao
+
+@Database(entities = [LikedArtworks::class], version = 1, exportSchema = false)
+@TypeConverters(Converters::class)
+abstract class LikedArtworksDatabase : RoomDatabase() {
+    abstract fun LikedArtworks(): LikedArtworksDao
 
     companion object {
         @Volatile
-        private var INSTANCE: UserDatabase? = null
+        private var INSTANCE: LikedArtworksDatabase? = null
 
-        fun getInstance(context: Context): UserDatabase {
+        fun getInstance(context: Context): LikedArtworksDatabase {
             return INSTANCE ?: synchronized(this) {
                 INSTANCE ?: Room.databaseBuilder(
                     context.applicationContext,
-                    UserDatabase::class.java,
-                    "app_database"
+                    LikedArtworksDatabase::class.java,
+                    "liked_artworks_database"
                 )
                     .fallbackToDestructiveMigration()
                     .build()

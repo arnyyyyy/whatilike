@@ -37,6 +37,8 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import coil.Coil
 import coil.compose.rememberAsyncImagePainter
+import com.example.whatilike.cached.user.deleteArtworkFromLiked
+import com.example.whatilike.cached.user.fetchLikedArtworkIds
 import com.example.whatilike.data.ArtObject
 import com.example.whatilike.data.downloadArtwork
 import com.example.whatilike.data.ArtRepositoryFactory
@@ -263,38 +265,4 @@ fun LikedArtworkCard(artwork: ArtObject, onDeleteClicked: () -> Unit) {
         }
     }
 
-}
-
-
-fun deleteArtworkFromLiked(userId: String, artworkId: Int) {
-    val db = FirebaseFirestore.getInstance()
-    db.collection("users")
-        .document(userId)
-        .collection("liked_artworks")
-        .whereEqualTo("artworkId", artworkId)
-        .get()
-        .addOnSuccessListener { result ->
-            val document = result.documents.firstOrNull()
-            document?.reference?.delete()
-                ?.addOnSuccessListener {
-                    println("Artwork successfully deleted from liked list")
-                }
-                ?.addOnFailureListener { exception ->
-                    println("Error deleting artwork: $exception")
-                }
-        }
-        .addOnFailureListener { exception ->
-            println("Error fetching liked artwork: $exception")
-        }
-}
-
-
-suspend fun fetchLikedArtworkIds(userId: String): List<Int> = withContext(Dispatchers.IO) {
-    val result = FirebaseFirestore.getInstance()
-        .collection("users")
-        .document(userId)
-        .collection("liked_artworks")
-        .get()
-        .await()
-    return@withContext result.documents.mapNotNull { it.getLong("artworkId")?.toInt() }
 }

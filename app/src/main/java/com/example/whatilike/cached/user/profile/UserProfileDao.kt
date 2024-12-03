@@ -4,6 +4,8 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+//import com.example.whatilike.cached.user.UserLikedArtwork
+import com.example.whatilike.cached.user.UserProfile
 
 @Dao
 interface UserProfileDao {
@@ -13,4 +15,3 @@ interface UserProfileDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun saveUserProfile(userProfile: UserProfile)
 }
-

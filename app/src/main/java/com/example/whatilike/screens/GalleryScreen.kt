@@ -27,13 +27,19 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.IntSize
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImagePainter
+import com.example.whatilike.R
+import com.example.whatilike.cached.user.addLikedArtworkToFirestore
+import com.example.whatilike.ui.theme.DarkBeige
 import com.google.firebase.auth.FirebaseUser
-import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlin.math.absoluteValue
@@ -59,24 +65,6 @@ fun GalleryScreen(artViewModel: ArtViewModel, user: FirebaseUser?) {
             CardSwiper(viewModel = artViewModel, userId = user.uid)
         }
     }
-}
-
-
-fun addLikedArtworkToFirestore(userId: String, artwork: ArtObject) {
-    val db = FirebaseFirestore.getInstance()
-
-    db.collection("users")
-        .document(userId)
-        .collection("liked_artworks")
-        .document(artwork.objectID.toString())
-        .set(mapOf("artworkId" to artwork.objectID))
-        .addOnSuccessListener {
-            println(artwork.objectID.toString())
-            println("Artwork added to liked_artworks successfully")
-        }
-        .addOnFailureListener { exception ->
-            println("Error adding artwork: $exception")
-        }
 }
 
 
@@ -115,7 +103,6 @@ fun CardSwiper(viewModel: ArtViewModel = viewModel(), userId: String) {
     }
 }
 
-
 @Composable
 fun ArtworkCard(
     artwork: ArtObject,
@@ -131,6 +118,8 @@ fun ArtworkCard(
         targetValue = if (isFlipped) 180f else 0f,
         animationSpec = tween(durationMillis = 300), label = ""
     )
+    val scale by animateFloatAsState(targetValue = if (isFlipped) 1.5f else 1f)
+
 
     val offsetX = remember { Animatable(0f) }
     val maxTiltAngle = 3f
@@ -168,6 +157,7 @@ fun ArtworkCard(
                                 viewModel.viewModelScope.launch(Dispatchers.IO) {
                                     viewModel.removeArtworkFromCache(currentArtwork.value)
                                 }
+                                isFlipped = false
                                 offsetX.snapTo(0f)
                             }
                         } else {
@@ -188,6 +178,7 @@ fun ArtworkCard(
             }
             .clickable { isFlipped = !isFlipped }
     ) {
+        PaperBackground(color = DarkBeige, modifier = Modifier.fillMaxSize())
         Box(
             modifier = Modifier
                 .graphicsLayer {
@@ -197,13 +188,19 @@ fun ArtworkCard(
                 .fillMaxSize()
         ) {
             if (isFlipped) {
+
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
                         .background(Color.White)
-                        .graphicsLayer { rotationY = 180f },
+                        .graphicsLayer {
+                            rotationY = 180f
+                            scaleX = scale
+                            scaleY = scale
+                        },
                     contentAlignment = Alignment.Center
                 ) {
+                    PaperBackground(color = Color.White, modifier = Modifier.fillMaxSize())
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(
                             text = currentArtwork.value.title,
@@ -241,7 +238,7 @@ fun ArtworkCard(
                     Image(
                         painter = painter,
                         contentDescription = currentArtwork.value.title,
-                        modifier = Modifier.fillMaxSize()
+                        modifier = Modifier.fillMaxSize().alpha(0.9f)
                     )
                     if (painter.state is AsyncImagePainter.State.Loading) {
                         CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
@@ -249,5 +246,27 @@ fun ArtworkCard(
                 }
             }
         }
+    }
+}
+
+@Composable
+fun PaperBackground(
+    color: Color,
+    modifier: Modifier = Modifier
+) {
+    Box(modifier = modifier) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(color)
+        )
+        Image(
+            painter = painterResource(id = R.drawable.paper_texture_white),
+            contentDescription = null,
+            modifier = Modifier
+                .fillMaxSize()
+                .alpha(0.5f),
+            contentScale = ContentScale.FillBounds
+        )
     }
 }
