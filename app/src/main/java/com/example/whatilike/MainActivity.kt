@@ -6,14 +6,28 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -42,6 +56,8 @@ import com.example.whatilike.screens.ProfileScreen
 import com.google.firebase.appcheck.FirebaseAppCheck
 import com.google.firebase.appcheck.playintegrity.PlayIntegrityAppCheckProviderFactory
 import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.delay
+import kotlin.random.Random
 
 class MainActivity : ComponentActivity() {
     private lateinit var auth: FirebaseAuth
@@ -72,13 +88,15 @@ class MainActivity : ComponentActivity() {
         val firestore = FirebaseFirestore.getInstance()
 
         val userProfileDao = UserDatabase.getInstance(this).userProfileDao()
-        val userViewModelFactory = UserProfileViewModelFactory( userProfileDao = userProfileDao, firestore, this)
-        val userProfileViewModel = ViewModelProvider(this, userViewModelFactory)[UserProfileViewModel::class.java]
+        val userViewModelFactory =
+            UserProfileViewModelFactory(userProfileDao = userProfileDao, firestore, this)
+        val userProfileViewModel =
+            ViewModelProvider(this, userViewModelFactory)[UserProfileViewModel::class.java]
 
-        val artworkDao =  ArtDatabase.getInstance(this).cachedArtworkDao()
+        val artworkDao = ArtDatabase.getInstance(this).cachedArtworkDao()
         val artworkViewModelFactory = ArtViewModelFactory(dao = artworkDao, context = this)
-        val artViewModel = ViewModelProvider(this, artworkViewModelFactory)[ArtViewModel::class.java]
-
+        val artViewModel =
+            ViewModelProvider(this, artworkViewModelFactory)[ArtViewModel::class.java]
 
 
 //        FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
@@ -95,8 +113,10 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             WhatilikeTheme {
-                MainScreen(userProfileViewModel = userProfileViewModel,
-                    artViewModel = artViewModel)
+                SplashScreen(
+                    userProfileViewModel = userProfileViewModel,
+                    artViewModel = artViewModel
+                )
             }
         }
     }
@@ -151,7 +171,11 @@ class MainActivity : ComponentActivity() {
     }
 
     @Composable
-    fun NavigationGraph(user: FirebaseUser?, userProfileViewModel: UserProfileViewModel, artViewModel: ArtViewModel) {
+    fun NavigationGraph(
+        user: FirebaseUser?,
+        userProfileViewModel: UserProfileViewModel,
+        artViewModel: ArtViewModel
+    ) {
         val navController = rememberNavController()
         Scaffold(
             bottomBar = {
@@ -176,8 +200,14 @@ class MainActivity : ComponentActivity() {
         ) { innerPadding ->
             NavHost(navController, startDestination = "favs", Modifier.padding(innerPadding)) {
                 composable("favs") { FavouritesScreen(user = user) }
-                composable("gallery") { GalleryScreen(user = user, artViewModel= artViewModel) }
-                composable("me") { ProfileScreen(user = user, signOut = { signOut() }, userProfileViewModel = userProfileViewModel) }
+                composable("gallery") { GalleryScreen(user = user, artViewModel = artViewModel) }
+                composable("me") {
+                    ProfileScreen(
+                        user = user,
+                        signOut = { signOut() },
+                        userProfileViewModel = userProfileViewModel
+                    )
+                }
             }
         }
     }
@@ -200,6 +230,50 @@ class MainActivity : ComponentActivity() {
             }
         } catch (e: ApiException) {
             println("Google sign-in failed: ${e.message}")
+        }
+    }
+
+    @Composable
+    fun SplashScreen(userProfileViewModel: UserProfileViewModel, artViewModel: ArtViewModel) {
+        var isLoading by remember { mutableStateOf(true) }
+
+        LaunchedEffect(Unit) {
+            artViewModel.loadRandomArtworks(15)
+            delay(2000)
+            isLoading = false
+        }
+
+        if (isLoading) {
+            SplashContent()
+        } else {
+            MainScreen(userProfileViewModel, artViewModel)
+        }
+    }
+
+
+    @Composable
+    fun SplashContent() {
+        Box(modifier = Modifier.fillMaxSize()) {
+            Image(
+                painter = painterResource(
+                    id = R.drawable.dali
+                ),
+                contentDescription = null,
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop,
+            )
+            Column(
+                modifier = Modifier.fillMaxSize(),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "What I Like?",
+                    fontFamily = FontFamily.Monospace,
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold,
+                )
+            }
         }
     }
 }
