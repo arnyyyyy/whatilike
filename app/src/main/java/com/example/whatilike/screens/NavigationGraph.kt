@@ -11,6 +11,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.whatilike.cached.user.LikedArtworksViewModel
 import com.example.whatilike.cached.user.UserProfileViewModel
 import com.example.whatilike.data.ArtViewModel
 import com.google.firebase.auth.FirebaseUser
@@ -20,6 +21,7 @@ fun NavigationGraph(
     user: FirebaseUser?,
     userProfileViewModel: UserProfileViewModel,
     artViewModel: ArtViewModel,
+    likedArtworksViewModel: LikedArtworksViewModel,
     onSignOut: () -> Unit
 ) {
     val navController = rememberNavController()
@@ -45,8 +47,8 @@ fun NavigationGraph(
         }
     ) { innerPadding ->
         NavHost(navController, startDestination = "gallery", Modifier.padding(innerPadding)) {
-            composable("favs") { FavouritesScreen(user = user) }
-            composable("gallery") { GalleryScreen(user = user, artViewModel = artViewModel) }
+            composable("favs") { FavouritesScreen(viewModel = likedArtworksViewModel) }
+            composable("gallery") { GalleryScreen(user = user, artViewModel = artViewModel, likedViewModel = likedArtworksViewModel) }
             composable("me") {
                 ProfileScreen(
                     user = user,

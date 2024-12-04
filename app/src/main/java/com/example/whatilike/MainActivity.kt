@@ -28,11 +28,15 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.whatilike.cached.artworks.ArtDatabase
+import com.example.whatilike.cached.user.LikedArtworksDatabase
+import com.example.whatilike.cached.user.LikedArtworksViewModel
+import com.example.whatilike.cached.user.LikedArtworksViewModelFactory
 import com.example.whatilike.cached.user.UserDatabase
 import com.example.whatilike.cached.user.UserProfileViewModel
 import com.example.whatilike.cached.user.UserProfileViewModelFactory
@@ -89,7 +93,10 @@ class MainActivity : ComponentActivity() {
 
         val firestore = FirebaseFirestore.getInstance()
 
-        val (userProfileViewModel, artViewModel) = initializeViewModels()
+        val models = initializeViewModels()
+        val userProfileViewModel :UserProfileViewModel = models["userProfile"] as UserProfileViewModel
+        val artViewModel : ArtViewModel =  models["art"] as ArtViewModel
+        val likedArtViewModel : LikedArtworksViewModel = models["liked"] as LikedArtworksViewModel
 
 
 //        FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
@@ -119,7 +126,8 @@ class MainActivity : ComponentActivity() {
                     onLoadingComplete = {
                         MainScreen(
                             userProfileViewModel = userProfileViewModel,
-                            artViewModel = artViewModel
+                            artViewModel = artViewModel,
+                            likedArtworksViewModel = likedArtViewModel
                         )
                     }
                 )
@@ -136,19 +144,30 @@ class MainActivity : ComponentActivity() {
         auth.signOut()
     }
 
-    fun initializeViewModels(): Pair<UserProfileViewModel, ArtViewModel> {
+    fun initializeViewModels(): Map<String, Any> {
         val userProfileDao = UserDatabase.getInstance(this).userProfileDao()
         val userViewModelFactory =
             UserProfileViewModelFactory(userProfileDao = userProfileDao, FirebaseFirestore.getInstance(), this)
         val userProfileViewModel =
             ViewModelProvider(this, userViewModelFactory)[UserProfileViewModel::class.java]
 
+        val likedArtworksDao = LikedArtworksDatabase.getInstance(this).LikedArtworks()
+        val likedArtworksViewModelFactory =
+            LikedArtworksViewModelFactory(likedArtworksDao = likedArtworksDao, FirebaseFirestore.getInstance(), this)
+        val likedArtworksViewModel =
+            ViewModelProvider(this, likedArtworksViewModelFactory)[LikedArtworksViewModel::class.java]
+
         val artworkDao = ArtDatabase.getInstance(this).cachedArtworkDao()
         val artworkViewModelFactory = ArtViewModelFactory(dao = artworkDao, context = this)
         val artViewModel =
             ViewModelProvider(this, artworkViewModelFactory)[ArtViewModel::class.java]
 
-        return userProfileViewModel to artViewModel
+
+        return mapOf(
+            "userProfile" to userProfileViewModel,
+            "art" to artViewModel,
+            "liked" to likedArtworksViewModel
+        )
     }
 
     private fun configureGoogleSignIn() {
@@ -182,10 +201,10 @@ class MainActivity : ComponentActivity() {
 //    }
 
     @Composable
-    fun MainScreen(userProfileViewModel: UserProfileViewModel, artViewModel: ArtViewModel) {
+    fun MainScreen(userProfileViewModel: UserProfileViewModel, artViewModel: ArtViewModel, likedArtworksViewModel: LikedArtworksViewModel) {
         if (currentUser != null) {
             userProfileViewModel.initializeUserProfileFromFirebase()
-            NavigationGraph(currentUser, userProfileViewModel, artViewModel, { signOut() })
+            NavigationGraph(currentUser, userProfileViewModel, artViewModel, likedArtworksViewModel, { signOut() })
         } else {
             AuthScreen(onSignInClick = { signInWithGoogle() })
         }

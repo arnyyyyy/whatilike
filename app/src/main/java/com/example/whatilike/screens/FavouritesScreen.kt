@@ -37,36 +37,22 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import coil.Coil
 import coil.compose.rememberAsyncImagePainter
-import com.example.whatilike.cached.user.deleteArtworkFromLiked
-import com.example.whatilike.cached.user.fetchLikedArtworkIds
+import com.example.whatilike.cached.user.LikedArtworksViewModel
 import com.example.whatilike.data.ArtObject
 import com.example.whatilike.data.downloadArtwork
 import com.example.whatilike.data.ArtRepositoryFactory
 import com.example.whatilike.ui.theme.UltraLightGrey
 import com.google.firebase.auth.FirebaseUser
-import com.google.firebase.firestore.FirebaseFirestore
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.tasks.await
-import kotlinx.coroutines.withContext
 import kotlin.math.roundToInt
 
 @Composable
-fun FavouritesScreen(user: FirebaseUser?) {
-    val context = LocalContext.current
-    val artRepository = remember { ArtRepositoryFactory(context).create() }
-    var likedArtworks by remember { mutableStateOf<List<ArtObject>>(emptyList()) }
-    var isLoading by remember { mutableStateOf(true) }
-    val scope = rememberCoroutineScope()
+fun FavouritesScreen(viewModel: LikedArtworksViewModel) {
+    val likedArtworks by viewModel.likedArtworks.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
 
-    LaunchedEffect(user?.uid) {
-        user?.uid?.let { userId ->
-            scope.launch {
-                val artworkIds = fetchLikedArtworkIds(userId)
-                likedArtworks = artRepository.getArtworksByIds(artworkIds)
-                isLoading = false
-            }
-        }
+    LaunchedEffect(Unit) {
+        viewModel.loadLikedArtworks()
     }
 
     if (isLoading) {
@@ -93,14 +79,10 @@ fun FavouritesScreen(user: FirebaseUser?) {
         } else {
             LazyColumn(modifier = Modifier.fillMaxSize()) {
                 items(likedArtworks) { artwork ->
-                    LikedArtworkCard(
-                        artwork = artwork,
-                        onDeleteClicked = {
-                            deleteArtworkFromLiked(user?.uid ?: "", artwork.objectID)
-                            likedArtworks =
-                                likedArtworks.filterNot { it.objectID == artwork.objectID }
-                        }
-                    )
+                        LikedArtworkCard(
+                            artwork = artwork,
+                            onDeleteClicked = { viewModel.deleteLikedArtwork(artwork.objectID) }
+                        )
                 }
             }
         }

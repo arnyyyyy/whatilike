@@ -1,249 +1,165 @@
 package com.example.whatilike.cached.user
 
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import android.net.Uri
+
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.android.identity.util.UUID
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.ktx.firestore
-import com.google.firebase.ktx.Firebase
-import com.google.firebase.storage.FirebaseStorage
+
+import com.example.whatilike.data.ArtObject
+import com.example.whatilike.data.ArtRepositoryFactory
+import com.google.firebase.Firebase
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.firestore
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import java.io.File
-import java.io.FileOutputStream
-import android.content.Context
-import com.example.whatilike.data.ArtObject
-import com.google.firebase.auth.FirebaseAuth
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 
-//
-//class LikedArtworksViewModel(
-//    private val userLikedArtworks: LikedArtworksDao,
-//    private val firestore: FirebaseFirestore = Firebase.firestore,
-//    private val context: Context
-//) : ViewModel() {
-//
-//    private val _currentLikedArtworks = MutableStateFlow<LikedArtworks?>(null)
-//    val currentLikedArtworks: StateFlow<LikedArtworks?> = _currentLikedArtworks
-//
-//    private val _isLoading = MutableStateFlow(false)
-//    val isLoading: StateFlow<Boolean> = _isLoading
-//
-//    fun initializeUserLikedArtworksFromFirebase() {
-//        viewModelScope.launch {
-//            _isLoading.value = true
-//            try {
-//                val firebaseUser = FirebaseAuth.getInstance().currentUser
-//                firebaseUser?.let { user ->
-//                    val userId = user.uid
-//                    val likedArtworksIds = emptyList<Int>()
-//                    val document = firestore.collection("users").document(userId).collection("liked_artworks").get().await()
-//                    if (!document.isEmpty) {
-//                        val newProfile = LikedArtworks(
-//                            uid = userId,
-//                            likedArtworksIds = likedArtworksIds
-//                        )
-//                        firestore.collection("users").document(userId).set(newProfile).await()
-//                    }
-//                    loadLikedArtworks(userId)
-//                }
-//            } catch (e: Exception) {
-//                e.printStackTrace()
-//            } finally {
-//                _isLoading.value = false
-//            }
-//        }
-//    }
-//
-//
-//    fun loadUserProfile(userId: String) {
-//        viewModelScope.launch {
-//            _isLoading.value = true
-//
-//            try {
-//                val localProfile = withContext(Dispatchers.IO) {
-//                    userLikedArtworks.getUserProfile(userId)
-//                }
-//                localProfile?.let { _currentUserProfile.value = it }
-//
-//                val document = firestore.collection("users").document(userId).get().await()
-//                val nickname = document.getString("nickname")
-//                val photoUrl = document.getString("photoUrl")
-//
-//                val updatedProfile = UserProfile(
-//                    uid = userId,
-//                    nickname = nickname ?: localProfile?.nickname.orEmpty(),
-//                    photoUrl = photoUrl ?: localProfile?.photoUrl.orEmpty()
-//                )
-//
-//                withContext(Dispatchers.IO) {
-//                    userLikedArtworks.saveUserProfile(updatedProfile)
-//                }
-//                _currentUserProfile.value = updatedProfile
-//
-//            } catch (e: Exception) {
-//                e.printStackTrace()
-//            } finally {
-//                _isLoading.value = false
-//            }
-//        }
-//    }
-//
-//    suspend fun getLocalImage(userId: String): Bitmap? {
-//        return withContext(Dispatchers.IO) {
-//            val localProfile = userLikedArtworks.getUserProfile(userId)
-//            localProfile?.photoUrl?.let {
-//                val file = File(it)
-//                if (file.exists()) BitmapFactory.decodeFile(file.absolutePath) else null
-//            }
-//        }
-//    }
-//
-//    fun updateNickname(userId: String, newNickname: String) {
-//        viewModelScope.launch {
-//            try {
-//                firestore.collection("users").document(userId)
-//                    .update("nickname", newNickname).await()
-//
-//                val currentProfile = withContext(Dispatchers.IO) {
-//                    userLikedArtworks.getUserProfile(userId)
-//                }
-//
-//                if (currentProfile != null) {
-//                    val updatedProfile = currentProfile.copy(nickname = newNickname)
-//                    withContext(Dispatchers.IO) {
-//                        userLikedArtworks.saveUserProfile(updatedProfile)
-//                    }
-//                    _currentUserProfile.value = updatedProfile
-//                }
-//            } catch (e: Exception) {
-//                e.printStackTrace()
-//            }
-//        }
-//    }
-//
-//    fun uploadUserPhoto(userId: String, photoUri: Uri) {
-//        viewModelScope.launch {
-//            _isLoading.value = true
-//            try {
-//                val storageRef = FirebaseStorage.getInstance().reference
-//                val userPhotoRef =
-//                    storageRef.child("user_photos/${userId}/${UUID.randomUUID()}.jpg")
-//
-//                userPhotoRef.putFile(photoUri).await()
-//
-//                val downloadUrl = userPhotoRef.downloadUrl.await()
-//                firestore.collection("users").document(userId)
-//                    .update("photoUrl", downloadUrl.toString()).await()
-//
-//                saveImageLocally(userId, photoUri)
-//                updateProfile(userId, downloadUrl.toString())
-//            } catch (e: Exception) {
-//                e.printStackTrace()
-//            } finally {
-//                _isLoading.value = false
-//            }
-//        }
-//    }
-//
-//    private fun saveImageLocally(userId: String, photoUri: Uri) {
-//        viewModelScope.launch(Dispatchers.IO) {
-//            val localProfile = userLikedArtworks.getUserProfile(userId)
-//            val localPath = saveImageToFile(photoUri)
-//
-//            if (localProfile != null) {
-//                userLikedArtworks.saveUserProfile(
-//                    UserProfile(
-//                        uid = userId,
-//                        nickname = localProfile.nickname,
-//                        photoUrl = localPath
-//                    )
-//                )
-//            }
-//        }
-//    }
-//
-//
-//    private fun addToLikedArtworks(userId: String, likedArtworkId: Int) {
-//        _currentLikedArtworks.value?.let {
-//            val updatedProfile = it.copy(photoUrl = photoUrl)
-//            _currentLikedArtworks.value = updatedProfile
-//            viewModelScope.launch(Dispatchers.IO) {
-//                userLikedArtworks.saveUserProfile(updatedProfile)
-//            }
-//        }
-//    }
-//}
-//
-//class LikedArtworkViewModelFactory(
-//    private val likedArtworkDao: LikedArtworksDao,
-//    private val firestore: FirebaseFirestore,
-//    private val context: Context
-//) : ViewModelProvider.Factory {
-//    override fun <T : ViewModel> create(modelClass: Class<T>): T {
-//        if (modelClass.isAssignableFrom(LikedArtworksViewModel::class.java)) {
-//            @Suppress("UNCHECKED_CAST")
-//            return LikedArtworksViewModel(likedArtworkDao, firestore, context) as T
-//        }
-//        throw IllegalArgumentException("Unknown ViewModel class")
-//    }
-//}
 
-suspend fun fetchLikedArtworkIds(userId: String): List<Int> = withContext(Dispatchers.IO) {
-    val result = FirebaseFirestore.getInstance()
-        .collection("users")
-        .document(userId)
-        .collection("liked_artworks")
-        .get()
-        .await()
-    return@withContext result.documents.mapNotNull { it.getLong("artworkId")?.toInt() }
+class LikedArtworksViewModel(
+    private val likedArtworksDao: LikedArtworksDao,
+    private val firestore: FirebaseFirestore = Firebase.firestore,
+    private val context: Context
+) : ViewModel() {
+
+    private val _likedArtworks = MutableStateFlow<List<ArtObject>>(emptyList())
+    val likedArtworks: StateFlow<List<ArtObject>> = _likedArtworks
+
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading: StateFlow<Boolean> = _isLoading
+    fun loadLikedArtworks() {
+        val user = FirebaseAuth.getInstance().currentUser
+        user?.let { firebaseUser ->
+            viewModelScope.launch {
+                _isLoading.value = true
+                try {
+                    val localLikedArtworks = withContext(Dispatchers.IO) {
+                        likedArtworksDao.getUserLikedArtworks(firebaseUser.uid)
+                    }
+
+                    val likedIds = localLikedArtworks?.likedArtworksIds ?: emptyList()
+
+                    if (likedIds.isEmpty()) {
+                        val remoteIds = fetchLikedArtworkIds(firebaseUser.uid)
+                        saveToLocalDatabase(firebaseUser.uid, remoteIds)
+                        val artworks = fetchArtworksByIds(remoteIds)
+                        _likedArtworks.value = artworks
+                    } else {
+                        val artworks = fetchArtworksByIds(likedIds)
+                        _likedArtworks.value = artworks
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                } finally {
+                    _isLoading.value = false
+                }
+            }
+        }
+    }
+
+    fun addLikedArtwork(artworkId: Int) {
+        val user = FirebaseAuth.getInstance().currentUser
+        user?.let { firebaseUser ->
+            viewModelScope.launch {
+                try {
+                    val document = firestore.collection("users")
+                        .document(firebaseUser.uid)
+                        .collection("liked_artworks")
+                        .document(artworkId.toString())
+
+                    document.set(mapOf("artworkId" to artworkId)).await()
+
+                    withContext(Dispatchers.IO) {
+                        val currentData = likedArtworksDao.getUserLikedArtworks(firebaseUser.uid)
+                        val updatedIds =
+                            currentData?.likedArtworksIds?.toMutableList() ?: mutableListOf()
+                        updatedIds.add(artworkId)
+                        likedArtworksDao.saveLikedArtworks(
+                            LikedArtworks(
+                                firebaseUser.uid,
+                                updatedIds
+                            )
+                        )
+                    }
+
+                    loadLikedArtworks()
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+        }
+    }
+
+    fun deleteLikedArtwork(artworkId: Int) {
+        val user = FirebaseAuth.getInstance().currentUser
+        user?.let { firebaseUser ->
+            viewModelScope.launch {
+                try {
+                    val querySnapshot = firestore.collection("users")
+                        .document(firebaseUser.uid)
+                        .collection("liked_artworks")
+                        .whereEqualTo("artworkId", artworkId)
+                        .get()
+                        .await()
+
+                    querySnapshot.documents.firstOrNull()?.reference?.delete()?.await()
+
+                    withContext(Dispatchers.IO) {
+                        val currentData = likedArtworksDao.getUserLikedArtworks(firebaseUser.uid)
+                        val updatedIds =
+                            currentData?.likedArtworksIds?.toMutableList() ?: mutableListOf()
+                        updatedIds.remove(artworkId)
+                        likedArtworksDao.saveLikedArtworks(
+                            LikedArtworks(
+                                firebaseUser.uid,
+                                updatedIds
+                            )
+                        )
+                    }
+
+                    loadLikedArtworks()
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+        }
+    }
+
+    private suspend fun saveToLocalDatabase(userId: String, likedIds: List<Int>) {
+        withContext(Dispatchers.IO) {
+            likedArtworksDao.saveLikedArtworks(LikedArtworks(userId, likedIds))
+        }
+    }
+
+    private suspend fun fetchLikedArtworkIds(userId: String): List<Int> {
+        val result = firestore.collection("users")
+            .document(userId)
+            .collection("liked_artworks")
+            .get()
+            .await()
+        return result.documents.mapNotNull { it.getLong("artworkId")?.toInt() }
+    }
+
+    private suspend fun fetchArtworksByIds(ids: List<Int>): List<ArtObject> {
+        val artRepository = ArtRepositoryFactory(context).create()
+        return artRepository.getArtworksByIds(ids)
+    }
 }
 
-fun deleteArtworkFromLiked(userId: String, artworkId: Int) {
-    val db = FirebaseFirestore.getInstance()
-    db.collection("users")
-        .document(userId)
-        .collection("liked_artworks")
-        .whereEqualTo("artworkId", artworkId)
-        .get()
-        .addOnSuccessListener { result ->
-            val document = result.documents.firstOrNull()
-            document?.reference?.delete()
-                ?.addOnSuccessListener {
-                    println("Artwork successfully deleted from liked list")
-                }
-                ?.addOnFailureListener { exception ->
-                    println("Error deleting artwork: $exception")
-                }
+class LikedArtworksViewModelFactory(
+    private val likedArtworksDao: LikedArtworksDao,
+    private val firestore: FirebaseFirestore,
+    private val context: Context
+) : ViewModelProvider.Factory {
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(LikedArtworksViewModel::class.java)) {
+            @Suppress("UNCHECKED_CAST")
+            return LikedArtworksViewModel(likedArtworksDao, firestore, context) as T
         }
-        .addOnFailureListener { exception ->
-            println("Error fetching liked artwork: $exception")
-        }
-}
-
-//
-
-
-fun addLikedArtworkToFirestore(userId: String, artwork: ArtObject) {
-    val db = FirebaseFirestore.getInstance()
-
-    db.collection("users")
-        .document(userId)
-        .collection("liked_artworks")
-        .document(artwork.objectID.toString())
-        .set(mapOf("artworkId" to artwork.objectID))
-        .addOnSuccessListener {
-            println(artwork.objectID.toString())
-            println("Artwork added to liked_artworks successfully")
-        }
-        .addOnFailureListener { exception ->
-            println("Error adding artwork: $exception")
-        }
+        throw IllegalArgumentException("Unknown ViewModel class")
+    }
 }

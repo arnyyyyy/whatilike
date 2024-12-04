@@ -37,7 +37,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImagePainter
 import com.example.whatilike.R
-import com.example.whatilike.cached.user.addLikedArtworkToFirestore
+import com.example.whatilike.cached.user.LikedArtworksViewModel
 import com.example.whatilike.ui.theme.DarkBeige
 import com.google.firebase.auth.FirebaseUser
 import kotlinx.coroutines.Dispatchers
@@ -46,7 +46,11 @@ import kotlin.math.absoluteValue
 
 
 @Composable
-fun GalleryScreen(artViewModel: ArtViewModel, user: FirebaseUser?) {
+fun GalleryScreen(
+    artViewModel: ArtViewModel,
+    likedViewModel: LikedArtworksViewModel,
+    user: FirebaseUser?
+) {
     val artworks by artViewModel.artworks
 
     LaunchedEffect(Unit) {
@@ -62,14 +66,18 @@ fun GalleryScreen(artViewModel: ArtViewModel, user: FirebaseUser?) {
         }
     } else {
         if (user != null) {
-            CardSwiper(viewModel = artViewModel, userId = user.uid)
+            CardSwiper(viewModel = artViewModel, likedViewModel = likedViewModel, userId = user.uid)
         }
     }
 }
 
 
 @Composable
-fun CardSwiper(viewModel: ArtViewModel = viewModel(), userId: String) {
+fun CardSwiper(
+    viewModel: ArtViewModel = viewModel(),
+    likedViewModel: LikedArtworksViewModel = viewModel(),
+    userId: String
+) {
     val artworks by viewModel.artworks
     var currentIndex by remember { mutableIntStateOf(0) }
     val currentArtwork = artworks.getOrNull(currentIndex)
@@ -97,7 +105,8 @@ fun CardSwiper(viewModel: ArtViewModel = viewModel(), userId: String) {
                 onSwiped = {
                     currentIndex = (currentIndex + 1) % artworks.size
                 },
-                viewModel = viewModel
+                artViewModel = viewModel,
+                likedViewModel = likedViewModel
             )
         }
     }
@@ -108,7 +117,8 @@ fun ArtworkCard(
     artwork: ArtObject,
     userId: String,
     onSwiped: () -> Unit,
-    viewModel: ArtViewModel
+    artViewModel: ArtViewModel,
+    likedViewModel: LikedArtworksViewModel
 ) {
     var isFlipped by remember { mutableStateOf(false) }
 
@@ -152,10 +162,10 @@ fun ArtworkCard(
                                 )
                                 onSwiped()
                                 if (offsetX.value > 0) {
-                                    addLikedArtworkToFirestore(userId, currentArtwork.value)
+                                    likedViewModel.addLikedArtwork(currentArtwork.value.objectID)
                                 }
-                                viewModel.viewModelScope.launch(Dispatchers.IO) {
-                                    viewModel.removeArtworkFromCache(currentArtwork.value)
+                                artViewModel.viewModelScope.launch(Dispatchers.IO) {
+                                    artViewModel.removeArtworkFromCache(currentArtwork.value)
                                 }
                                 isFlipped = false
                                 offsetX.snapTo(0f)
@@ -195,8 +205,6 @@ fun ArtworkCard(
                         .background(Color.White)
                         .graphicsLayer {
                             rotationY = 180f
-                            scaleX = scale
-                            scaleY = scale
                         },
                     contentAlignment = Alignment.Center
                 ) {
@@ -238,7 +246,9 @@ fun ArtworkCard(
                     Image(
                         painter = painter,
                         contentDescription = currentArtwork.value.title,
-                        modifier = Modifier.fillMaxSize().alpha(0.9f)
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .alpha(0.9f)
                     )
                     if (painter.state is AsyncImagePainter.State.Loading) {
                         CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
