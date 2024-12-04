@@ -83,6 +83,8 @@ dependencies {
     implementation(libs.coil.compose)
 
     implementation(libs.androidx.material)
+    implementation (libs.jsoup)
+
 
 
     implementation(libs.androidx.core.ktx)

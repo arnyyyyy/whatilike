@@ -146,7 +146,7 @@ class LikedArtworksViewModel(
 
     private suspend fun fetchArtworksByIds(ids: List<Int>): List<ArtObject> {
         val artRepository = ArtRepositoryFactory(context).create()
-        return artRepository.getArtworksByIds(ids)
+        return artRepository.getArtworksByIdsMetMuseum(ids)
     }
 }
 

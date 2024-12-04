@@ -1,5 +1,6 @@
 package com.example.whatilike.screens
 
+import android.util.Log
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -8,6 +9,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -22,15 +24,21 @@ import androidx.compose.ui.unit.IntOffset
 import kotlin.math.roundToInt
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntSize
 import androidx.lifecycle.viewModelScope
@@ -38,6 +46,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImagePainter
 import com.example.whatilike.R
 import com.example.whatilike.cached.user.LikedArtworksViewModel
+import com.example.whatilike.data.MuseumApi
 import com.example.whatilike.ui.theme.DarkBeige
 import com.google.firebase.auth.FirebaseUser
 import kotlinx.coroutines.Dispatchers
@@ -52,21 +61,73 @@ fun GalleryScreen(
     user: FirebaseUser?
 ) {
     val artworks by artViewModel.artworks
+//    var currentApi by remember { mutableStateOf(MuseumApi.MET) }
+
 
     LaunchedEffect(Unit) {
         artViewModel.loadRandomArtworks(15)
     }
 
-    if (artworks.isEmpty()) {
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
+    Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.Top, horizontalAlignment = Alignment.CenterHorizontally) {
+        Spacer(modifier = Modifier.height(20.dp))
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(0.dp),
+            horizontalArrangement = Arrangement.Center
         ) {
-            Text(text = "No artworks found", fontSize = 18.sp, color = Color.Black)
+
+            Button(
+                onClick = {
+                    artViewModel.setCurrentApi(MuseumApi.MET)
+                    Log.d("Gallery", "moved to Met")
+                }, colors = ButtonColors(
+                    containerColor = Color.Transparent,
+                    contentColor = Color.White,
+                    disabledContainerColor = Color.Transparent,
+                    disabledContentColor = Color.White
+                )
+            ) {
+                Text(text = "MetropolitanMuseum", fontFamily = FontFamily.Monospace)
+            }
+
+            Text(
+                text = "|",
+                fontFamily = FontFamily.Monospace,
+                fontSize = 20.sp,
+                modifier = Modifier.padding(10.dp)
+            )
+
+            Button(
+                onClick = {
+                    artViewModel.setCurrentApi(MuseumApi.HERMITAGE)
+                    Log.d("Gallery", "moved to Hermitage")
+                },
+                colors = ButtonColors(
+                    containerColor = Color.Transparent,
+                    contentColor = Color.White,
+                    disabledContainerColor = Color.Transparent,
+                    disabledContentColor = Color.White
+                )
+            ) {
+                Text(text = "Hermitage Museum", fontFamily = FontFamily.Monospace)
+            }
         }
-    } else {
-        if (user != null) {
-            CardSwiper(viewModel = artViewModel, likedViewModel = likedViewModel, userId = user.uid)
+        if (artworks.isEmpty()) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(text = "No artworks found", fontSize = 18.sp, color = Color.Black)
+            }
+        } else {
+            if (user != null) {
+                CardSwiper(
+                    viewModel = artViewModel,
+                    likedViewModel = likedViewModel,
+                    userId = user.uid
+                )
+            }
         }
     }
 }

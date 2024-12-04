@@ -1,5 +1,6 @@
 [versions]
 agp = "8.6.0"
+jsoup = "1.15.4"
 kotlin = "1.9.0"
 
 coreKtx = "1.13.1"
@@ -43,6 +44,7 @@ coil-compose = { module = "io.coil-kt:coil-compose", version.ref = "coilCompose"
 androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "composeBom" }
 
 converter-gson = { module = "com.squareup.retrofit2:converter-gson", version.ref = "converterGson" }
+jsoup = { module = "org.jsoup:jsoup", version.ref = "jsoup" }
 retrofit = { module = "com.squareup.retrofit2:retrofit", version.ref = "retrofit" }
 
 androidx-room-ktx-v251 = { module = "androidx.room:room-ktx", version.ref = "roomVersion" }
