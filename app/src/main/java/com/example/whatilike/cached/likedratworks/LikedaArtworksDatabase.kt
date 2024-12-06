@@ -10,7 +10,7 @@ import androidx.room.TypeConverters
 @Database(entities = [LikedArtworks::class], version = 1, exportSchema = false)
 @TypeConverters(Converters::class)
 abstract class LikedArtworksDatabase : RoomDatabase() {
-    abstract fun LikedArtworks(): LikedArtworksDao
+    abstract fun likedArtworks(): LikedArtworksDao
 
     companion object {
         @Volatile

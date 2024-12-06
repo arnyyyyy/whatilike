@@ -40,10 +40,7 @@ import coil.compose.rememberAsyncImagePainter
 import com.example.whatilike.cached.user.LikedArtworksViewModel
 import com.example.whatilike.data.ArtObject
 import com.example.whatilike.data.downloadArtwork
-import com.example.whatilike.data.ArtRepositoryFactory
 import com.example.whatilike.ui.theme.UltraLightGrey
-import com.google.firebase.auth.FirebaseUser
-import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
 @Composable

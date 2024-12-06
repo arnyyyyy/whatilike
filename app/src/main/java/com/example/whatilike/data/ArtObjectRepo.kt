@@ -2,10 +2,7 @@ package com.example.whatilike.data
 
 import android.content.Context
 import android.util.Log
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import coil.ImageLoader
 import coil.request.ImageRequest
 import com.example.whatilike.cached.artworks.ArtDatabase
@@ -14,12 +11,11 @@ import com.example.whatilike.cached.artworks.CachedArtworkDao
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.invoke
 import kotlinx.coroutines.withContext
 import kotlin.random.Random
 
 enum class MuseumApi {
-    MET, HERMITAGE
+    MET, HERMITAGE, HARVARD, MUSEUM
 }
 
 class ArtRepository(
@@ -29,13 +25,6 @@ class ArtRepository(
     private val metMuseumApi: MetMuseumApiService = MetDatabase.apiService
     private val hermitageMuseumApi: HermitageMuseumApiService = HermitageMuseumApiService()
     private val currentApi = mutableStateOf(MuseumApi.MET)
-//    private var currentApi: MuseumApi = MuseumApi.MET
-
-//
-
-//    fun switchMuseumApi(toHermitage: Boolean) {
-//        currentApi = if (toHermitage) MuseumApi.HERMITAGE else MuseumApi.MET
-//    }
 
     private val imageLoader = ImageLoader(context)
 
@@ -72,7 +61,7 @@ class ArtRepository(
         }
 
 
-    suspend fun getArtworksFromMetMuseum(count: Int = 15): List<ArtObject> =
+    private suspend fun getArtworksFromMetMuseum(count: Int = 15): List<ArtObject> =
         withContext(Dispatchers.IO) {
             val cachedArtworks = cachedArtworkDao.getCachedArtworks(count)
             val alreadyLoadedIDs = cachedArtworks.map { it.objectID }.toSet()
@@ -176,8 +165,7 @@ class ArtRepository(
             val deferredArtworks = randomIds.map { id ->
                 async {
                     val artResponse = hermitageMuseumApi.getObjectByID(id)
-                    val artObject = artResponse
-                    if (artObject != null && !artObject.primaryImage.isNullOrEmpty()) artObject else null
+                    if (artResponse != null && !artResponse.primaryImage.isNullOrEmpty()) artResponse else null
                 }
             }
 

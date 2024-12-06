@@ -9,6 +9,7 @@ val Pink80 = Color(0xFFEFB8C8)
 //val DustRose = Color(0xFFCE8B8B)
 val Beige = Color(0xFFE8D0BD)
 val DarkBeige = Color(0xFFE1AF89)
+val Brown = Color(0xFF3A260A)
 
 val PinkyBeige = Color(0xFFFFE8E5)
 

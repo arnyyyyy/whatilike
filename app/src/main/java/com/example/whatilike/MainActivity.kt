@@ -1,38 +1,11 @@
 package com.example.whatilike
 
-import android.app.NotificationChannel
-import android.app.NotificationManager
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.sp
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
 import com.example.whatilike.cached.artworks.ArtDatabase
 import com.example.whatilike.cached.user.LikedArtworksDatabase
 import com.example.whatilike.cached.user.LikedArtworksViewModel
@@ -42,7 +15,6 @@ import com.example.whatilike.cached.user.UserProfileViewModel
 import com.example.whatilike.cached.user.UserProfileViewModelFactory
 import com.example.whatilike.data.ArtViewModel
 import com.example.whatilike.data.ArtViewModelFactory
-import com.example.whatilike.screens.GalleryScreen
 import com.example.whatilike.ui.theme.WhatilikeTheme
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
@@ -55,15 +27,12 @@ import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.GoogleAuthProvider
 
 import com.example.whatilike.screens.AuthScreen
-import com.example.whatilike.screens.FavouritesScreen
 import com.example.whatilike.screens.NavigationGraph
-import com.example.whatilike.screens.ProfileScreen
 import com.example.whatilike.screens.SplashScreen
 import com.google.firebase.appcheck.FirebaseAppCheck
 import com.google.firebase.appcheck.playintegrity.PlayIntegrityAppCheckProviderFactory
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.delay
-import kotlin.random.Random
 
 class MainActivity : ComponentActivity() {
     private lateinit var auth: FirebaseAuth
@@ -89,9 +58,6 @@ class MainActivity : ComponentActivity() {
         firebaseAppCheck.installAppCheckProviderFactory(
             PlayIntegrityAppCheckProviderFactory.getInstance()
         )
-
-
-        val firestore = FirebaseFirestore.getInstance()
 
         val models = initializeViewModels()
         val userProfileViewModel :UserProfileViewModel = models["userProfile"] as UserProfileViewModel
@@ -144,14 +110,14 @@ class MainActivity : ComponentActivity() {
         auth.signOut()
     }
 
-    fun initializeViewModels(): Map<String, Any> {
+    private fun initializeViewModels(): Map<String, Any> {
         val userProfileDao = UserDatabase.getInstance(this).userProfileDao()
         val userViewModelFactory =
             UserProfileViewModelFactory(userProfileDao = userProfileDao, FirebaseFirestore.getInstance(), this)
         val userProfileViewModel =
             ViewModelProvider(this, userViewModelFactory)[UserProfileViewModel::class.java]
 
-        val likedArtworksDao = LikedArtworksDatabase.getInstance(this).LikedArtworks()
+        val likedArtworksDao = LikedArtworksDatabase.getInstance(this).likedArtworks()
         val likedArtworksViewModelFactory =
             LikedArtworksViewModelFactory(likedArtworksDao = likedArtworksDao, FirebaseFirestore.getInstance(), this)
         val likedArtworksViewModel =
@@ -204,7 +170,7 @@ class MainActivity : ComponentActivity() {
     fun MainScreen(userProfileViewModel: UserProfileViewModel, artViewModel: ArtViewModel, likedArtworksViewModel: LikedArtworksViewModel) {
         if (currentUser != null) {
             userProfileViewModel.initializeUserProfileFromFirebase()
-            NavigationGraph(currentUser, userProfileViewModel, artViewModel, likedArtworksViewModel, { signOut() })
+            NavigationGraph(currentUser, userProfileViewModel, artViewModel, likedArtworksViewModel) { signOut() }
         } else {
             AuthScreen(onSignInClick = { signInWithGoogle() })
         }

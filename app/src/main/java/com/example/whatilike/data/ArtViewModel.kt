@@ -12,19 +12,12 @@ import kotlinx.coroutines.launch
 
 class ArtViewModel(context: Context, dao: CachedArtworkDao) : ViewModel() {
     private val repository = ArtRepository(context, dao)
-//    private val metMuseumApi :  MetMuseumApiService = MetDatabase.apiService
-//    private val hermitageMuseumApi : HermitageMuseumApiService = HermitageMuseumApiService()
+    val currentApi = mutableStateOf(MuseumApi.MET)
     private val _artworks = mutableStateOf<List<ArtObject>>(emptyList())
-  //  private val currentApi = mutableStateOf(MuseumApi.MET)
     val artworks: State<List<ArtObject>> = _artworks
 
     private val _isLoading = mutableStateOf(false)
     val isLoading: State<Boolean> = _isLoading
-
-//    fun switchMuseum(toPushkin: Boolean) {
-//        repository.switchMuseumApi(toPushkin)
-//        loadRandomArtworks(15)
-//    }
 
     fun removeArtworkFromCache(artwork: ArtObject) {
         viewModelScope.launch {

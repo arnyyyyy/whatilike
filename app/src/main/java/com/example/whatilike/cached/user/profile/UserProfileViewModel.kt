@@ -145,7 +145,7 @@ class UserProfileViewModel(
                     .update("photoUrl", downloadUrl.toString()).await()
 
                 saveImageLocally(userId, photoUri)
-                updateProfile(userId, downloadUrl.toString())
+                updateProfile(downloadUrl.toString())
             } catch (e: Exception) {
                 e.printStackTrace()
             } finally {
@@ -183,7 +183,7 @@ class UserProfileViewModel(
         }
     }
 
-    private fun updateProfile(userId: String, photoUrl: String) {
+    private fun updateProfile(photoUrl: String) {
         _currentUserProfile.value?.let {
             val updatedProfile = it.copy(photoUrl = photoUrl)
             _currentUserProfile.value = updatedProfile

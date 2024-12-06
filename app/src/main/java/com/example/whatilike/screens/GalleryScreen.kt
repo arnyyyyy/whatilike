@@ -2,6 +2,7 @@ package com.example.whatilike.screens
 
 import android.util.Log
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import com.example.whatilike.data.ArtViewModel
@@ -33,6 +34,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonColors
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.graphicsLayer
@@ -40,13 +42,13 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.IntSize
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImagePainter
 import com.example.whatilike.R
 import com.example.whatilike.cached.user.LikedArtworksViewModel
 import com.example.whatilike.data.MuseumApi
+import com.example.whatilike.ui.theme.Brown
 import com.example.whatilike.ui.theme.DarkBeige
 import com.google.firebase.auth.FirebaseUser
 import kotlinx.coroutines.Dispatchers
@@ -61,15 +63,13 @@ fun GalleryScreen(
     user: FirebaseUser?
 ) {
     val artworks by artViewModel.artworks
-//    var currentApi by remember { mutableStateOf(MuseumApi.MET) }
-
 
     LaunchedEffect(Unit) {
         artViewModel.loadRandomArtworks(15)
     }
 
     Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.Top, horizontalAlignment = Alignment.CenterHorizontally) {
-        Spacer(modifier = Modifier.height(20.dp))
+        Spacer(modifier = Modifier.height(10.dp))
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -83,7 +83,7 @@ fun GalleryScreen(
                     Log.d("Gallery", "moved to Met")
                 }, colors = ButtonColors(
                     containerColor = Color.Transparent,
-                    contentColor = Color.White,
+                    contentColor = Brown,
                     disabledContainerColor = Color.Transparent,
                     disabledContentColor = Color.White
                 )
@@ -105,7 +105,7 @@ fun GalleryScreen(
                 },
                 colors = ButtonColors(
                     containerColor = Color.Transparent,
-                    contentColor = Color.White,
+                    contentColor = Brown,
                     disabledContainerColor = Color.Transparent,
                     disabledContentColor = Color.White
                 )
@@ -125,7 +125,6 @@ fun GalleryScreen(
                 CardSwiper(
                     viewModel = artViewModel,
                     likedViewModel = likedViewModel,
-                    userId = user.uid
                 )
             }
         }
@@ -137,7 +136,6 @@ fun GalleryScreen(
 fun CardSwiper(
     viewModel: ArtViewModel = viewModel(),
     likedViewModel: LikedArtworksViewModel = viewModel(),
-    userId: String
 ) {
     val artworks by viewModel.artworks
     var currentIndex by remember { mutableIntStateOf(0) }
@@ -162,7 +160,6 @@ fun CardSwiper(
             println("iiiha" + artwork.objectID.toString())
             ArtworkCard(
                 artwork = artwork,
-                userId = userId,
                 onSwiped = {
                     currentIndex = (currentIndex + 1) % artworks.size
                 },
@@ -176,7 +173,6 @@ fun CardSwiper(
 @Composable
 fun ArtworkCard(
     artwork: ArtObject,
-    userId: String,
     onSwiped: () -> Unit,
     artViewModel: ArtViewModel,
     likedViewModel: LikedArtworksViewModel
@@ -189,8 +185,6 @@ fun ArtworkCard(
         targetValue = if (isFlipped) 180f else 0f,
         animationSpec = tween(durationMillis = 300), label = ""
     )
-    val scale by animateFloatAsState(targetValue = if (isFlipped) 1.5f else 1f)
-
 
     val offsetX = remember { Animatable(0f) }
     val maxTiltAngle = 3f
