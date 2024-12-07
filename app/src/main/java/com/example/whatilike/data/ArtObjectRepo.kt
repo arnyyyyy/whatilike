@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.Log
 import androidx.compose.runtime.mutableStateOf
 import coil.ImageLoader
+import coil.request.CachePolicy
 import coil.request.ImageRequest
 import com.example.whatilike.cached.artworks.ArtDatabase
 import com.example.whatilike.cached.artworks.CachedArtwork
@@ -83,7 +84,7 @@ class ArtRepository(
 //        val alreadyLoadedIDs = cachedArtworks.map { it.objectID }.toSet()
         return withContext(Dispatchers.IO) {
             val newArtworks =
-                fetchHermitageArtworks(count * 10)
+                fetchHermitageArtworks(count * 2)
 //                .filterNot { alreadyLoadedIDs.contains(it.objectID) }
 
             if (newArtworks.isNotEmpty()) {
@@ -115,6 +116,8 @@ class ArtRepository(
                             onError = { _, throwable -> Log.e("ImageLoader", "Error loading image ${throwable.throwable}") },
                             onSuccess = { _, _ -> Log.d("ImageLoader", "Image loaded successfully") }
                         )
+                        .memoryCachePolicy(CachePolicy.ENABLED)
+                        .diskCachePolicy(CachePolicy.ENABLED)
                         .build()
                 )
             }
@@ -175,6 +178,17 @@ class ArtRepository(
         }
 
 
+    suspend fun getArtworksByIds(ids : List<Int>) : List<ArtObject> = withContext(
+        Dispatchers.IO
+    ) {
+        val (hermitageIds, metIds) = ids.partition { it > 1000000 }
+        val hermitageArtworks = getArtworksByIdsHermitageMuseum(hermitageIds)
+        val metArtworks = getArtworksByIdsMetMuseum(metIds)
+
+        return@withContext hermitageArtworks + metArtworks
+
+    }
+
     suspend fun getArtworksByIdsMetMuseum(ids: List<Int>): List<ArtObject> = withContext(
         Dispatchers.IO
     ) {
@@ -190,7 +204,7 @@ class ArtRepository(
     ) {
         ids.map { id ->
             async {
-                hermitageMuseumApi.getObjectByID(id)
+                hermitageMuseumApi.getObjectByID(id - MUSEUM_SHIFT)
             }
         }.awaitAll().filterNotNull()
     }

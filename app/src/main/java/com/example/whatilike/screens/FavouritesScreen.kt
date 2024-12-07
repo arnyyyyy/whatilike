@@ -40,6 +40,8 @@ import coil.compose.rememberAsyncImagePainter
 import com.example.whatilike.cached.user.LikedArtworksViewModel
 import com.example.whatilike.data.ArtObject
 import com.example.whatilike.data.downloadArtwork
+import com.example.whatilike.ui.components.PaperBackground
+import com.example.whatilike.ui.theme.DarkBeige
 import com.example.whatilike.ui.theme.UltraLightGrey
 import kotlin.math.roundToInt
 
@@ -55,31 +57,33 @@ fun FavouritesScreen(viewModel: LikedArtworksViewModel) {
     if (isLoading) {
         CircularProgressIndicator()
     }
+    Box(modifier = Modifier.fillMaxSize()) {
+        PaperBackground(color = DarkBeige, modifier = Modifier.fillMaxSize())
+        Column(modifier = Modifier.fillMaxSize()) {
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text = "Favourites",
+                fontFamily = FontFamily.Monospace,
+                color = Color.Black,
+                modifier = Modifier.align(Alignment.CenterHorizontally).padding(bottom = 10.dp)
+            )
 
-    Column(modifier = Modifier.fillMaxSize()) {
-        Spacer(modifier = Modifier.height(16.dp))
-        Text(
-            text = "Favourites",
-            fontFamily = FontFamily.Monospace,
-            color = Color.Black,
-            modifier = Modifier.align(Alignment.CenterHorizontally)
-        )
-
-        if (likedArtworks.isEmpty()) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text(
-                    text = "No liked artworks",
-                    fontFamily = FontFamily.Monospace,
-                    color = Color.Black
-                )
-            }
-        } else {
-            LazyColumn(modifier = Modifier.fillMaxSize()) {
-                items(likedArtworks) { artwork ->
+            if (likedArtworks.isEmpty()) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text(
+                        text = "No liked artworks",
+                        fontFamily = FontFamily.Monospace,
+                        color = Color.Black
+                    )
+                }
+            } else {
+                LazyColumn(modifier = Modifier.fillMaxSize()) {
+                    items(likedArtworks) { artwork ->
                         LikedArtworkCard(
                             artwork = artwork,
                             onDeleteClicked = { viewModel.deleteLikedArtwork(artwork.objectID) }
                         )
+                    }
                 }
             }
         }

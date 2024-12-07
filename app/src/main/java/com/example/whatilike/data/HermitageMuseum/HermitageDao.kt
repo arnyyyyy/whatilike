@@ -4,6 +4,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jsoup.Jsoup
 
+const val MUSEUM_SHIFT = 1000000
+
 class HermitageMuseumApiService {
     suspend fun getObjectByID(objectId: Int): ArtObject? {
         return withContext(Dispatchers.IO) {
@@ -19,7 +21,7 @@ class HermitageMuseumApiService {
                         } else {
                             it
                         }
-                    } + "?w=500&h=500"
+                    } + "?w=1000&h=1000"
 
                 val title = document.select("meta[property=og:title]").attr("content")
                 val description = document.select("meta[property=og:description]").attr("content")
@@ -35,7 +37,7 @@ class HermitageMuseumApiService {
                 }
 
                 ArtObject(
-                    objectID = objectId,
+                    objectID = objectId + MUSEUM_SHIFT,
                     primaryImage = imageUrl,
                     title = title,
                     period = description,

@@ -32,6 +32,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.ButtonDefaults
@@ -45,9 +46,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImagePainter
+import coil.request.CachePolicy
 import com.example.whatilike.R
 import com.example.whatilike.cached.user.LikedArtworksViewModel
 import com.example.whatilike.data.MuseumApi
+import com.example.whatilike.ui.components.PaperBackground
 import com.example.whatilike.ui.theme.Brown
 import com.example.whatilike.ui.theme.DarkBeige
 import com.google.firebase.auth.FirebaseUser
@@ -69,7 +72,6 @@ fun GalleryScreen(
     }
 
     Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.Top, horizontalAlignment = Alignment.CenterHorizontally) {
-        Spacer(modifier = Modifier.height(10.dp))
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -88,15 +90,22 @@ fun GalleryScreen(
                     disabledContentColor = Color.White
                 )
             ) {
-                Text(text = "MetropolitanMuseum", fontFamily = FontFamily.Monospace)
+                Image(
+                    painter = painterResource(id = R.drawable.met_logo),
+                    contentDescription = null,
+                    modifier = Modifier.padding(3.dp).height(20.dp).width(20.dp),
+                    contentScale = ContentScale.Crop
+                )
+
+//                Text(text = "MetropolitanMuseum", fontFamily = FontFamily.Monospace)
             }
 
-            Text(
-                text = "|",
-                fontFamily = FontFamily.Monospace,
-                fontSize = 20.sp,
-                modifier = Modifier.padding(10.dp)
-            )
+//            Text(
+//                text = "|",
+//                fontFamily = FontFamily.Monospace,
+//                fontSize = 20.sp,
+//                modifier = Modifier.padding(start = 10.dp, end = 10.dp)
+//            )
 
             Button(
                 onClick = {
@@ -110,22 +119,31 @@ fun GalleryScreen(
                     disabledContentColor = Color.White
                 )
             ) {
-                Text(text = "Hermitage Museum", fontFamily = FontFamily.Monospace)
+                Image(
+                    painter = painterResource(id = R.drawable.hermitage_logo),
+                    contentDescription = null,
+                    modifier = Modifier.padding(3.dp).height(20.dp).width(20.dp),
+                    contentScale = ContentScale.Crop
+                )
+//                Text(text = "Hermitage Museum", fontFamily = FontFamily.Monospace)
             }
         }
-        if (artworks.isEmpty()) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(text = "No artworks found", fontSize = 18.sp, color = Color.Black)
-            }
-        } else {
-            if (user != null) {
-                CardSwiper(
-                    viewModel = artViewModel,
-                    likedViewModel = likedViewModel,
-                )
+        Box(modifier = Modifier.fillMaxSize()) {
+            PaperBackground(color = DarkBeige, modifier = Modifier.fillMaxSize())
+            if (artworks.isEmpty()) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(text = "No artworks found", fontSize = 18.sp, color = Color.Black)
+                }
+            } else {
+                if (user != null) {
+                    CardSwiper(
+                        viewModel = artViewModel,
+                        likedViewModel = likedViewModel,
+                    )
+                }
             }
         }
     }
@@ -295,6 +313,8 @@ fun ArtworkCard(
                         crossfade(true)
                         placeholder(android.R.drawable.progress_indeterminate_horizontal)
                         error(android.R.drawable.stat_notify_error)
+                        diskCachePolicy(CachePolicy.ENABLED)
+                        memoryCachePolicy(CachePolicy.ENABLED)
                     }
                 )
                 Box(modifier = Modifier.fillMaxSize()) {
@@ -311,27 +331,5 @@ fun ArtworkCard(
                 }
             }
         }
-    }
-}
-
-@Composable
-fun PaperBackground(
-    color: Color,
-    modifier: Modifier = Modifier
-) {
-    Box(modifier = modifier) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(color)
-        )
-        Image(
-            painter = painterResource(id = R.drawable.paper_texture_white),
-            contentDescription = null,
-            modifier = Modifier
-                .fillMaxSize()
-                .alpha(0.5f),
-            contentScale = ContentScale.FillBounds
-        )
     }
 }
