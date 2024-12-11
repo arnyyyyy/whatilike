@@ -34,7 +34,7 @@ class ArtViewModel(context: Context) : ViewModel() {
     fun loadRandomArtworks(count: Int) {
         viewModelScope.launch {
             try {
-                val result = repository.getRandomArtworks(count * 5)
+                val result = repository.getRandomArtworks(count * 4)
                 _artworks.value = result
                 Log.d("ArtViewModel", "Total artworks loaded: ${_artworks.value.size}")
             } catch (e: Exception) {

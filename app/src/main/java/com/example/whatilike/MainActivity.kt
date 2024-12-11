@@ -87,7 +87,9 @@ class MainActivity : ComponentActivity() {
                 LaunchedEffect(Unit) {
                     artViewModel.loadRandomArtworks(20)
                     likedArtViewModel.loadLikedArtworks()
-                    delay(4000)
+                    while (artViewModel.isLoading.value) {
+                        delay(100)
+                    }
                     isLoading = false
                 }
 
