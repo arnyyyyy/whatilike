@@ -62,6 +62,7 @@ import com.example.whatilike.ui.theme.Brown
 import com.example.whatilike.ui.theme.DarkBeige
 import com.google.firebase.auth.FirebaseUser
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.math.absoluteValue
 
@@ -73,10 +74,16 @@ fun GalleryScreen(
     user: FirebaseUser?
 ) {
     val artworks by artViewModel.artworks.collectAsState(initial = emptyList())
+    var isInit by remember { mutableStateOf(true) }
 
-//    LaunchedEffect(Unit) {
-//        artViewModel.loadRandomArtworks(200)
-//    }
+
+    LaunchedEffect(isInit) {
+        if (isInit) {
+            delay(80000)
+            artViewModel.loadRandomArtworks(150)
+            isInit = false
+        }
+    }
 
     Column(
         modifier = Modifier.fillMaxSize(),
@@ -93,6 +100,7 @@ fun GalleryScreen(
             Button(
                 onClick = {
                     artViewModel.setCurrentApi(MuseumApi.MET)
+                    isInit = true
                     Log.d("Gallery", "moved to Met")
                 }, colors = ButtonColors(
                     containerColor = Color.Transparent,
@@ -116,6 +124,7 @@ fun GalleryScreen(
             Button(
                 onClick = {
                     artViewModel.setCurrentApi(MuseumApi.HERMITAGE)
+                    isInit = true
                     Log.d("Gallery", "moved to Hermitage")
                 },
                 colors = ButtonColors(
@@ -143,7 +152,12 @@ fun GalleryScreen(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(text = "No artworks found", fontSize = 18.sp, color = Color.Black)
+                    if (artViewModel.isLoading.value) {
+                            CircularProgressIndicator()
+                    }
+                    else {
+                        Text(text = "No artworks found", fontSize = 18.sp, color = Color.Black)
+                    }
                 }
             } else {
                 if (user != null) {
@@ -190,9 +204,9 @@ fun CardSwiper(
         }
     }
 
-//    if (viewModel.isLoading.value && currentIndex >= artworks.size - 3) {
-//        CircularProgressIndicator()
-//    }
+    if (viewModel.isLoading.value) {
+        CircularProgressIndicator()
+    }
 
     Box(
         modifier = Modifier.fillMaxSize(),

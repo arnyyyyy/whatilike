@@ -85,7 +85,7 @@ class MainActivity : ComponentActivity() {
                 var isLoading by remember { mutableStateOf(true) }
 
                 LaunchedEffect(Unit) {
-                    artViewModel.loadRandomArtworks(200)
+                    artViewModel.loadRandomArtworks(20)
                     likedArtViewModel.loadLikedArtworks()
                     delay(4000)
                     isLoading = false

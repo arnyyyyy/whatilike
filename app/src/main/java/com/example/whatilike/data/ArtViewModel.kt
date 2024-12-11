@@ -8,44 +8,34 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
 class ArtViewModel(context: Context) : ViewModel() {
     private val repository = ArtRepository(context)
-    val currentApi = mutableStateOf(MuseumApi.MET)
     private val _artworks = MutableStateFlow<List<ArtObject>>(emptyList())
     val artworks: StateFlow<List<ArtObject>> = _artworks
     var currentIndex = mutableIntStateOf(0)
 
-    private val _isLoading = mutableStateOf(false)
+    private val _isLoading = mutableStateOf(true)
     val isLoading: State<Boolean> = _isLoading
 
-//    fun removeArtworkFromCache(artwork: ArtObject) {
-//        viewModelScope.launch {
-////            repository.removeArtworkFromCache(artwork)
-//            _artworks.value = _artworks.value.filterNot { it.objectID == artwork.objectID }
-//        }
-//    }
-
-    fun setCurrentApi(currentApi : MuseumApi) {
-        Log.d("View Model", "moved to ${currentApi.name}")
+    fun setCurrentApi(currentApi: MuseumApi) {
         _artworks.value = emptyList()
+        _isLoading.value = true
         repository.setCurrentApi(currentApi)
-        loadRandomArtworks(20)
+        Log.d("View Model", "moved to ${currentApi.name}")
         currentIndex.value = 0
+        loadRandomArtworks(20)
     }
 
-
     fun loadRandomArtworks(count: Int) {
-        _isLoading.value = true
-
         viewModelScope.launch {
             try {
                 val result = repository.getRandomArtworks(count * 5)
                 _artworks.value = result
-//                _artworks.value = (_artworks.value + result).distinctBy { it.objectID }
                 Log.d("ArtViewModel", "Total artworks loaded: ${_artworks.value.size}")
             } catch (e: Exception) {
                 Log.e("ArtViewModel", "Failed to load artworks", e)
