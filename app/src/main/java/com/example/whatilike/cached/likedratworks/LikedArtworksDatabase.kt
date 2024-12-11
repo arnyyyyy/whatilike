@@ -23,7 +23,7 @@ abstract class LikedArtworksDatabase : RoomDatabase() {
                     LikedArtworksDatabase::class.java,
                     "liked_artworks_database"
                 )
-                    .fallbackToDestructiveMigration()
+//                    .fallbackToDestructiveMigration()
                     .build()
                     .also { INSTANCE = it }
             }

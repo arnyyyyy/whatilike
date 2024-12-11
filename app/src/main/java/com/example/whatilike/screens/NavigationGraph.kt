@@ -11,6 +11,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.whatilike.cached.user.FolderViewModel
 import com.example.whatilike.cached.user.LikedArtworksViewModel
 import com.example.whatilike.cached.user.UserProfileViewModel
 import com.example.whatilike.data.ArtViewModel
@@ -21,6 +22,7 @@ fun NavigationGraph(
     user: FirebaseUser?,
     userProfileViewModel: UserProfileViewModel,
     artViewModel: ArtViewModel,
+    foldersViewModel : FolderViewModel,
     likedArtworksViewModel: LikedArtworksViewModel,
     onSignOut: () -> Unit
 ) {
@@ -47,7 +49,7 @@ fun NavigationGraph(
         }
     ) { innerPadding ->
         NavHost(navController, startDestination = "gallery", Modifier.padding(innerPadding)) {
-            composable("favs") { FavouritesScreen(viewModel = likedArtworksViewModel) }
+            composable("favs") { FavouritesScreen(viewModel = likedArtworksViewModel, foldersViewModel = foldersViewModel) }
             composable("gallery") { GalleryScreen(user = user, artViewModel = artViewModel, likedViewModel = likedArtworksViewModel) }
             composable("me") {
                 ProfileScreen(

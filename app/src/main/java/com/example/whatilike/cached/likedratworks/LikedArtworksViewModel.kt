@@ -31,6 +31,7 @@ class LikedArtworksViewModel(
 
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading
+
     fun loadLikedArtworks() {
         val user = FirebaseAuth.getInstance().currentUser
         user?.let { firebaseUser ->
@@ -107,6 +108,7 @@ class LikedArtworksViewModel(
                         .await()
 
                     querySnapshot.documents.firstOrNull()?.reference?.delete()?.await()
+
 
                     withContext(Dispatchers.IO) {
                         val currentData = likedArtworksDao.getUserLikedArtworks(firebaseUser.uid)

@@ -6,7 +6,9 @@ import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.*
 import androidx.lifecycle.ViewModelProvider
-import com.example.whatilike.cached.artworks.ArtDatabase
+import com.example.whatilike.cached.user.ArtworkFoldersDatabase
+import com.example.whatilike.cached.user.FolderViewModel
+import com.example.whatilike.cached.user.FolderViewModelFactory
 import com.example.whatilike.cached.user.LikedArtworksDatabase
 import com.example.whatilike.cached.user.LikedArtworksViewModel
 import com.example.whatilike.cached.user.LikedArtworksViewModelFactory
@@ -25,7 +27,6 @@ import com.google.android.gms.tasks.Task
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.GoogleAuthProvider
-
 import com.example.whatilike.screens.AuthScreen
 import com.example.whatilike.screens.NavigationGraph
 import com.example.whatilike.screens.SplashScreen
@@ -62,7 +63,9 @@ class MainActivity : ComponentActivity() {
         val models = initializeViewModels()
         val userProfileViewModel :UserProfileViewModel = models["userProfile"] as UserProfileViewModel
         val artViewModel : ArtViewModel =  models["art"] as ArtViewModel
+
         val likedArtViewModel : LikedArtworksViewModel = models["liked"] as LikedArtworksViewModel
+        val foldersViewModel : FolderViewModel = models["folders"] as FolderViewModel
 
 
 //        FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
@@ -82,9 +85,9 @@ class MainActivity : ComponentActivity() {
                 var isLoading by remember { mutableStateOf(true) }
 
                 LaunchedEffect(Unit) {
-                    artViewModel.loadRandomArtworks(10)
+                    artViewModel.loadRandomArtworks(200)
                     likedArtViewModel.loadLikedArtworks()
-                    delay(3000)
+                    delay(4000)
                     isLoading = false
                 }
 
@@ -94,7 +97,8 @@ class MainActivity : ComponentActivity() {
                         MainScreen(
                             userProfileViewModel = userProfileViewModel,
                             artViewModel = artViewModel,
-                            likedArtworksViewModel = likedArtViewModel
+                            likedArtworksViewModel = likedArtViewModel,
+                            foldersViewModel = foldersViewModel
                         )
                     }
                 )
@@ -120,12 +124,17 @@ class MainActivity : ComponentActivity() {
 
         val likedArtworksDao = LikedArtworksDatabase.getInstance(this).likedArtworks()
         val likedArtworksViewModelFactory =
-            LikedArtworksViewModelFactory(likedArtworksDao = likedArtworksDao, FirebaseFirestore.getInstance(), this)
+            LikedArtworksViewModelFactory(likedArtworksDao, FirebaseFirestore.getInstance(), this)
         val likedArtworksViewModel =
             ViewModelProvider(this, likedArtworksViewModelFactory)[LikedArtworksViewModel::class.java]
 
-        val artworkDao = ArtDatabase.getInstance(this).cachedArtworkDao()
-        val artworkViewModelFactory = ArtViewModelFactory(dao = artworkDao, context = this)
+        val foldersDao = ArtworkFoldersDatabase.getInstance(this).folders()
+        val foldersViewModelFactory =
+            FolderViewModelFactory(foldersDao, FirebaseFirestore.getInstance(), this)
+        val folderViewModel =
+            ViewModelProvider(this, foldersViewModelFactory)[FolderViewModel::class.java]
+
+        val artworkViewModelFactory = ArtViewModelFactory(context = this)
         val artViewModel =
             ViewModelProvider(this, artworkViewModelFactory)[ArtViewModel::class.java]
 
@@ -133,7 +142,8 @@ class MainActivity : ComponentActivity() {
         return mapOf(
             "userProfile" to userProfileViewModel,
             "art" to artViewModel,
-            "liked" to likedArtworksViewModel
+            "liked" to likedArtworksViewModel,
+            "folders" to folderViewModel
         )
     }
 
@@ -168,10 +178,10 @@ class MainActivity : ComponentActivity() {
 //    }
 
     @Composable
-    fun MainScreen(userProfileViewModel: UserProfileViewModel, artViewModel: ArtViewModel, likedArtworksViewModel: LikedArtworksViewModel) {
+    fun MainScreen(userProfileViewModel: UserProfileViewModel, artViewModel: ArtViewModel, likedArtworksViewModel: LikedArtworksViewModel, foldersViewModel : FolderViewModel) {
         if (currentUser != null) {
             userProfileViewModel.initializeUserProfileFromFirebase()
-            NavigationGraph(currentUser, userProfileViewModel, artViewModel, likedArtworksViewModel) { signOut() }
+            NavigationGraph(currentUser, userProfileViewModel, artViewModel, likedArtworksViewModel =likedArtworksViewModel, foldersViewModel = foldersViewModel) { signOut() }
         } else {
             AuthScreen(onSignInClick = { signInWithGoogle() })
         }

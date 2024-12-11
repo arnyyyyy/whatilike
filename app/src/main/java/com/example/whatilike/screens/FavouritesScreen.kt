@@ -37,6 +37,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import coil.Coil
 import coil.compose.rememberAsyncImagePainter
+import com.example.whatilike.cached.user.FolderViewModel
 import com.example.whatilike.cached.user.LikedArtworksViewModel
 import com.example.whatilike.data.ArtObject
 import com.example.whatilike.data.downloadArtwork
@@ -46,47 +47,65 @@ import com.example.whatilike.ui.theme.UltraLightGrey
 import kotlin.math.roundToInt
 
 @Composable
-fun FavouritesScreen(viewModel: LikedArtworksViewModel) {
+fun FavouritesScreen(viewModel: LikedArtworksViewModel, foldersViewModel : FolderViewModel) {
     val likedArtworks by viewModel.likedArtworks.collectAsState()
+    val folders by foldersViewModel.folders.collectAsState()
+
     val isLoading by viewModel.isLoading.collectAsState()
 
     LaunchedEffect(Unit) {
         viewModel.loadLikedArtworks()
     }
 
+    LaunchedEffect(Unit) {
+        foldersViewModel.loadFolders()
+    }
+
+
     if (isLoading) {
         CircularProgressIndicator()
     }
-    Box(modifier = Modifier.fillMaxSize()) {
-        PaperBackground(color = DarkBeige, modifier = Modifier.fillMaxSize())
-        Column(modifier = Modifier.fillMaxSize()) {
-            Spacer(modifier = Modifier.height(16.dp))
-            Text(
-                text = "Favourites",
-                fontFamily = FontFamily.Monospace,
-                color = Color.Black,
-                modifier = Modifier.align(Alignment.CenterHorizontally).padding(bottom = 10.dp)
-            )
 
-            if (likedArtworks.isEmpty()) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+    if(folders.isEmpty()) {
+        Box(modifier = Modifier.fillMaxSize()) {
+            PaperBackground(color = DarkBeige, modifier = Modifier.fillMaxSize())
+            Column(modifier = Modifier.fillMaxSize()) {
+                Spacer(modifier = Modifier.height(16.dp))
+//                Row() {
                     Text(
-                        text = "No liked artworks",
+                        text = "Favourites",
                         fontFamily = FontFamily.Monospace,
-                        color = Color.Black
+                        color = Color.Black,
+                        modifier = Modifier.align(Alignment.CenterHorizontally)
+                            .padding(bottom = 10.dp)
                     )
-                }
-            } else {
-                LazyColumn(modifier = Modifier.fillMaxSize()) {
-                    items(likedArtworks) { artwork ->
-                        LikedArtworkCard(
-                            artwork = artwork,
-                            onDeleteClicked = { viewModel.deleteLikedArtwork(artwork.objectID) }
+
+//                    IconButton(onClick = { foldersViewModel.addFolder("folder1") }) { }
+//                }
+
+                if (likedArtworks.isEmpty()) {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Text(
+                            text = "No liked artworks",
+                            fontFamily = FontFamily.Monospace,
+                            color = Color.Black
                         )
+                    }
+                } else {
+                    LazyColumn(modifier = Modifier.fillMaxSize()) {
+                        items(likedArtworks) { artwork ->
+                            LikedArtworkCard(
+                                artwork = artwork,
+                                onDeleteClicked = { viewModel.deleteLikedArtwork(artwork.objectID) }
+                            )
+                        }
                     }
                 }
             }
         }
+    }
+    else {
+
     }
 }
 

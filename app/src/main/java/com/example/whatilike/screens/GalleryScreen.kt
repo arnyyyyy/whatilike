@@ -1,5 +1,6 @@
 package com.example.whatilike.screens
 
+import android.content.Context
 import android.util.Log
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
@@ -40,13 +41,19 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.Coil
 import coil.compose.AsyncImagePainter
+import coil.compose.AsyncImagePainter.State.Empty.painter
+import coil.compose.rememberAsyncImagePainter
 import coil.request.CachePolicy
+import coil.request.ImageRequest
+import coil.request.SuccessResult
 import com.example.whatilike.R
 import com.example.whatilike.cached.user.LikedArtworksViewModel
 import com.example.whatilike.data.MuseumApi
@@ -65,13 +72,17 @@ fun GalleryScreen(
     likedViewModel: LikedArtworksViewModel,
     user: FirebaseUser?
 ) {
-    val artworks by artViewModel.artworks
+    val artworks by artViewModel.artworks.collectAsState(initial = emptyList())
 
-    LaunchedEffect(Unit) {
-        artViewModel.loadRandomArtworks(15)
-    }
+//    LaunchedEffect(Unit) {
+//        artViewModel.loadRandomArtworks(200)
+//    }
 
-    Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.Top, horizontalAlignment = Alignment.CenterHorizontally) {
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.Top,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -93,7 +104,10 @@ fun GalleryScreen(
                 Image(
                     painter = painterResource(id = R.drawable.met_logo),
                     contentDescription = null,
-                    modifier = Modifier.padding(3.dp).height(20.dp).width(20.dp),
+                    modifier = Modifier
+                        .padding(3.dp)
+                        .height(20.dp)
+                        .width(20.dp),
                     contentScale = ContentScale.Crop
                 )
 
@@ -122,7 +136,10 @@ fun GalleryScreen(
                 Image(
                     painter = painterResource(id = R.drawable.hermitage_logo),
                     contentDescription = null,
-                    modifier = Modifier.padding(3.dp).height(20.dp).width(20.dp),
+                    modifier = Modifier
+                        .padding(3.dp)
+                        .height(20.dp)
+                        .width(20.dp),
                     contentScale = ContentScale.Crop
                 )
 //                Text(text = "Hermitage Museum", fontFamily = FontFamily.Monospace)
@@ -149,26 +166,43 @@ fun GalleryScreen(
     }
 }
 
+suspend fun preloadImage(imageUrl: String?, context: Context) {
+
+    val imageLoader = Coil.imageLoader(context)
+    val request = ImageRequest.Builder(context)
+        .data(imageUrl)
+        .build()
+
+    try {
+        val result = imageLoader.execute(request) as SuccessResult
+        // Выполняется успешная загрузка, изображение кэшируется
+    } catch (e: Exception) {
+        e.printStackTrace() // Обработка ошибки
+    }
+}
 
 @Composable
 fun CardSwiper(
     viewModel: ArtViewModel = viewModel(),
     likedViewModel: LikedArtworksViewModel = viewModel(),
 ) {
-    val artworks by viewModel.artworks
+    val artworks by viewModel.artworks.collectAsState(initial = emptyList())
     var currentIndex by remember { mutableIntStateOf(0) }
     val currentArtwork = artworks.getOrNull(currentIndex)
+    val context = LocalContext.current
 
-    LaunchedEffect(currentIndex) {
-        if (currentIndex >= artworks.size - 3) {
-            println("timetoload")
-            viewModel.loadRandomArtworks(10)
+    val nextArtwork = artworks.getOrNull(currentIndex + 1)
+    val thirdArtwork = artworks.getOrNull(currentIndex + 2)
+
+    LaunchedEffect(nextArtwork) {
+        nextArtwork?.let {
+            preloadImage(it.primaryImage, context)
         }
     }
 
-    if (viewModel.isLoading.value && currentIndex >= artworks.size - 3) {
-        CircularProgressIndicator()
-    }
+//    if (viewModel.isLoading.value && currentIndex >= artworks.size - 3) {
+//        CircularProgressIndicator()
+//    }
 
     Box(
         modifier = Modifier.fillMaxSize(),
@@ -179,10 +213,32 @@ fun CardSwiper(
             ArtworkCard(
                 artwork = artwork,
                 onSwiped = {
+                    println(currentIndex)
+                    println(artworks.size)
                     currentIndex = (currentIndex + 1) % artworks.size
                 },
                 artViewModel = viewModel,
                 likedViewModel = likedViewModel
+            )
+        }
+        nextArtwork?.let { next ->
+            val painter = rememberAsyncImagePainter(next.primaryImage)
+            Image(
+                painter = painter,
+                contentDescription = next.title,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .alpha(0.0f)
+            )
+        }
+        thirdArtwork?.let { next ->
+            val painter = rememberAsyncImagePainter(next.primaryImage)
+            Image(
+                painter = painter,
+                contentDescription = next.title,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .alpha(0.0f)
             )
         }
     }
@@ -210,7 +266,7 @@ fun ArtworkCard(
     val tiltAngle = (offsetX.value / maxOffset) * maxTiltAngle
     val alpha_ = 1f - (offsetX.value.absoluteValue / maxOffset).coerceIn(0f, 1f)
 
-    println("SOS: Image URL - ${currentArtwork.value.primaryImage}, ID - ${currentArtwork.value.objectID}")
+//    println("SOS: Image URL - ${currentArtwork.value.primaryImage}, ID - ${currentArtwork.value.objectID}")
 
 
     val coroutineScope = rememberCoroutineScope()
@@ -236,9 +292,6 @@ fun ArtworkCard(
                                 onSwiped()
                                 if (offsetX.value > 0) {
                                     likedViewModel.addLikedArtwork(currentArtwork.value.objectID)
-                                }
-                                artViewModel.viewModelScope.launch(Dispatchers.IO) {
-                                    artViewModel.removeArtworkFromCache(currentArtwork.value)
                                 }
                                 isFlipped = false
                                 offsetX.snapTo(0f)
@@ -307,15 +360,8 @@ fun ArtworkCard(
                     }
                 }
             } else {
-                val painter = rememberImagePainter(
-                    data = artwork.primaryImage,
-                    builder = {
-                        crossfade(true)
-                        placeholder(android.R.drawable.progress_indeterminate_horizontal)
-                        error(android.R.drawable.stat_notify_error)
-                        diskCachePolicy(CachePolicy.ENABLED)
-                        memoryCachePolicy(CachePolicy.ENABLED)
-                    }
+                val painter = rememberAsyncImagePainter(
+                    model = artwork.primaryImage
                 )
                 Box(modifier = Modifier.fillMaxSize()) {
                     Image(
