@@ -111,15 +111,7 @@ fun GalleryScreen(
                     contentScale = ContentScale.Crop
                 )
 
-//                Text(text = "MetropolitanMuseum", fontFamily = FontFamily.Monospace)
             }
-
-//            Text(
-//                text = "|",
-//                fontFamily = FontFamily.Monospace,
-//                fontSize = 20.sp,
-//                modifier = Modifier.padding(start = 10.dp, end = 10.dp)
-//            )
 
             Button(
                 onClick = {
@@ -142,7 +134,6 @@ fun GalleryScreen(
                         .width(20.dp),
                     contentScale = ContentScale.Crop
                 )
-//                Text(text = "Hermitage Museum", fontFamily = FontFamily.Monospace)
             }
         }
         Box(modifier = Modifier.fillMaxSize()) {
@@ -175,9 +166,8 @@ suspend fun preloadImage(imageUrl: String?, context: Context) {
 
     try {
         val result = imageLoader.execute(request) as SuccessResult
-        // Выполняется успешная загрузка, изображение кэшируется
     } catch (e: Exception) {
-        e.printStackTrace() // Обработка ошибки
+        e.printStackTrace()
     }
 }
 
@@ -187,7 +177,7 @@ fun CardSwiper(
     likedViewModel: LikedArtworksViewModel = viewModel(),
 ) {
     val artworks by viewModel.artworks.collectAsState(initial = emptyList())
-    var currentIndex by remember { mutableIntStateOf(0) }
+    var currentIndex by viewModel.currentIndex
     val currentArtwork = artworks.getOrNull(currentIndex)
     val context = LocalContext.current
 
@@ -213,8 +203,6 @@ fun CardSwiper(
             ArtworkCard(
                 artwork = artwork,
                 onSwiped = {
-                    println(currentIndex)
-                    println(artworks.size)
                     currentIndex = (currentIndex + 1) % artworks.size
                 },
                 artViewModel = viewModel,

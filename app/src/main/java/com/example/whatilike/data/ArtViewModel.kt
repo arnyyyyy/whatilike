@@ -3,6 +3,7 @@ package com.example.whatilike.data
 import android.content.Context
 import android.util.Log
 import androidx.compose.runtime.State
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -16,6 +17,7 @@ class ArtViewModel(context: Context) : ViewModel() {
     val currentApi = mutableStateOf(MuseumApi.MET)
     private val _artworks = MutableStateFlow<List<ArtObject>>(emptyList())
     val artworks: StateFlow<List<ArtObject>> = _artworks
+    var currentIndex = mutableIntStateOf(0)
 
     private val _isLoading = mutableStateOf(false)
     val isLoading: State<Boolean> = _isLoading
@@ -32,6 +34,7 @@ class ArtViewModel(context: Context) : ViewModel() {
         _artworks.value = emptyList()
         repository.setCurrentApi(currentApi)
         loadRandomArtworks(20)
+        currentIndex.value = 0
     }
 
 
