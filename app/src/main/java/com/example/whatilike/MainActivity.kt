@@ -96,10 +96,7 @@ class MainActivity : ComponentActivity() {
 //                        val likedArtworksDeferred = async {
 //                            likedArtViewModel.loadLikedArtworks()
 //                        }
-//                        val randomArtworksDeferred = async {
-//                            artViewModel.loadRandomArtworks(20, true)
-//                        }
-//
+
 //                        likedArtworksDeferred.await()
 //                        randomArtworksDeferred.await()
 //                    }
@@ -107,10 +104,16 @@ class MainActivity : ComponentActivity() {
 //                    while (artViewModel.isLoading.value) {
 //                        delay(100)
 //                    }
-                    delay(10000)
-                    isLoading = false
 
+                    delay(10000)
                 }
+
+                isLoading = false
+
+                artViewModel.loadArtworks(true)
+                artViewModel.loadArtworks(false)
+
+
 
                 SplashScreen(
                     isLoading = isLoading,

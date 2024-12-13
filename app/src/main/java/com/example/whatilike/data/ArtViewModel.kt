@@ -6,6 +6,7 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewModelScope
 import coil.Coil
 import coil.ImageLoader
 import kotlinx.coroutines.CoroutineScope
@@ -104,6 +105,12 @@ class ArtViewModel(context: Context) : ViewModel() {
         currentApi.value = newApi
     }
 
+    fun loadArtworks(isMainApi: Boolean) {
+        viewModelScope.launch {
+            loadRandomArtworks(count = 100, isMainApi = isMainApi)
+        }
+    }
+
 
     suspend fun loadRandomArtworks(count: Int, isMainApi: Boolean) {
             try {
@@ -111,9 +118,9 @@ class ArtViewModel(context: Context) : ViewModel() {
                 val result = repository.getRandomArtworks(count * 4, currentApi)
 
                 if (isMainApi) {
-                    _metArtworks.value = result
+                    _metArtworks.value += result
                 } else {
-                    _hermitageArtworks.value = result
+                    _hermitageArtworks.value += result
                 }
                 Log.d("ArtViewModel", "Total artworks loaded: ${artworks.value.size}")
             } catch (e: Exception) {
