@@ -51,20 +51,13 @@ class HermitageMuseumApiService {
                         }
                     }
 
-                Log.d("HERMITAGE", imageUrl)
-
 
                 val title = document.select("meta[property=og:title]").attr("content")
                 val description = document.select("meta[property=og:description]").attr("content")
                 val objectURL = document.select("meta[property=og:url]").attr("content")
 
                 if (title.contains("Государственный Эрмитаж", ignoreCase = true) && description.contains("Смотрите музейные коллекции онлайн", ignoreCase = true)) {
-                    Log.d("Hermitage Api", "Object $objectId skipped: data is empty")
                     return@withContext null
-                }
-                else {
-                    Log.d("Hermitage Api", "Object $objectId accepted with  bless")
-
                 }
 
                 ArtObject(

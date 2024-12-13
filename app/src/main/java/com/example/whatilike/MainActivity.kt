@@ -88,21 +88,26 @@ class MainActivity : ComponentActivity() {
                 var isLoading by remember { mutableStateOf(true) }
 
                 LaunchedEffect(Unit) {
-                    coroutineScope {
-                        val likedArtworksDeferred = async {
-                            likedArtViewModel.loadLikedArtworks()
-                        }
-                        val randomArtworksDeferred = async {
-                            artViewModel.loadRandomArtworks(20, true)
-                        }
+//                    artViewModel.loadRandomArtworks(20, true)
+                    likedArtViewModel.loadLikedArtworks()
 
-                        likedArtworksDeferred.await()
-                        randomArtworksDeferred.await()
-                    }
 
-                    while (artViewModel.isLoading.value) {
-                        delay(100)
-                    }
+//                    coroutineScope {
+//                        val likedArtworksDeferred = async {
+//                            likedArtViewModel.loadLikedArtworks()
+//                        }
+//                        val randomArtworksDeferred = async {
+//                            artViewModel.loadRandomArtworks(20, true)
+//                        }
+//
+//                        likedArtworksDeferred.await()
+//                        randomArtworksDeferred.await()
+//                    }
+
+//                    while (artViewModel.isLoading.value) {
+//                        delay(100)
+//                    }
+                    delay(10000)
                     isLoading = false
 
                 }

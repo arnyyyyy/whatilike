@@ -72,20 +72,6 @@ fun GalleryScreen(
     user: FirebaseUser?
 ) {
     val artworks by artViewModel.artworks.collectAsState(initial = emptyList())
-    var isInit by remember { mutableStateOf(true) }
-
-
-    LaunchedEffect(isInit) {
-        if (isInit) {
-            artViewModel.loadRandomArtworks(20, false)
-            delay(80000)
-            artViewModel.loadRandomArtworks(150, true)
-//            delay(80000)
-//            delay(80000)
-            artViewModel.loadRandomArtworks(150, false)
-            isInit = false
-        }
-    }
 
     Column(
         modifier = Modifier.fillMaxSize(),
@@ -102,7 +88,6 @@ fun GalleryScreen(
             Button(
                 onClick = {
                     artViewModel.setCurrentApi(MuseumApi.MET)
-                    isInit = true
                     Log.d("Gallery", "moved to Met")
                 }, colors = ButtonColors(
                     containerColor = Color.Transparent,
@@ -126,7 +111,6 @@ fun GalleryScreen(
             Button(
                 onClick = {
                     artViewModel.setCurrentApi(MuseumApi.HERMITAGE)
-                    isInit = true
                     Log.d("Gallery", "moved to Hermitage")
                 },
                 colors = ButtonColors(

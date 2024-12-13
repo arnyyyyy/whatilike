@@ -29,8 +29,7 @@ class LikedArtworksViewModel(
     private val context: Context
 ) : ViewModel() {
 
-    private val _likedArtworks = MutableStateFlow<List<ArtObject>>(emptyList())
-    val likedArtworks: StateFlow<List<ArtObject>> = _likedArtworks
+    val likedArtworks = MutableStateFlow<List<ArtObject>>(emptyList())
 
     private val _isLoading = mutableStateOf(true)
     val isLoading: State<Boolean> = _isLoading
@@ -51,10 +50,10 @@ class LikedArtworksViewModel(
                         val remoteIds = fetchLikedArtworkIds(firebaseUser.uid)
                         saveToLocalDatabase(firebaseUser.uid, remoteIds)
                         val artworks = fetchArtworksByIds(remoteIds)
-                        _likedArtworks.value = artworks
+                        likedArtworks.value = artworks
                     } else {
                         val artworks = fetchArtworksByIds(likedIds)
-                        _likedArtworks.value = artworks
+                        likedArtworks.value = artworks
                     }
                 } catch (e: Exception) {
                     e.printStackTrace()

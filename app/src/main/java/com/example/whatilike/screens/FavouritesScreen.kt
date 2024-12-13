@@ -51,8 +51,8 @@ import kotlin.math.roundToInt
 
 @Composable
 fun FavouritesScreen(viewModel: LikedArtworksViewModel, foldersViewModel: FolderViewModel) {
-    val likedArtworks by viewModel.likedArtworks.collectAsState()
-    val folders by foldersViewModel.folders.collectAsState()
+    val likedArtworks by viewModel.likedArtworks.collectAsState(initial = emptyList())
+    val folders by foldersViewModel.folders.collectAsState(initial = emptyList())
 
 //    LaunchedEffect(Unit) {
 //        viewModel.loadLikedArtworks()
@@ -96,20 +96,7 @@ fun FavouritesScreen(viewModel: LikedArtworksViewModel, foldersViewModel: Folder
                             Text(text = "No liked artworks", fontSize = 18.sp, color = Color.Black)
                         }
                     }
-
-
-//                if (likedArtworks.isEmpty() ) {
-//                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-//                        Text(
-//                            text = "No liked artworks",
-//                            fontFamily = FontFamily.Monospace,
-//                            color = Color.Black
-//                        )
-//                    }
                 } else {
-                    Column(modifier = Modifier.fillMaxSize()) {
-
-                    }
                     LazyColumn(modifier = Modifier.fillMaxSize()) {
                         items(likedArtworks) { artwork ->
                             LikedArtworkCard(
@@ -121,7 +108,6 @@ fun FavouritesScreen(viewModel: LikedArtworksViewModel, foldersViewModel: Folder
                 }
             }
         }
-    } else {
     }
 }
 
