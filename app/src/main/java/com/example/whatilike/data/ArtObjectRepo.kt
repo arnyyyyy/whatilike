@@ -20,10 +20,10 @@ class ArtRepository(
     private val hermitageMuseumApi: HermitageMuseumApiService = HermitageMuseumApiService()
     private val currentApi = mutableStateOf(MuseumApi.MET)
 
-    suspend fun getRandomArtworks(count: Int = 15): List<ArtObject> =
-        if (currentApi.value == MuseumApi.MET) {
+    suspend fun getRandomArtworks(count: Int = 15, currentApi_: MuseumApi): List<ArtObject> =
+        if (currentApi_ == MuseumApi.MET) {
             getArtworksFromMetMuseum(count)
-        } else if (currentApi.value == MuseumApi.HERMITAGE) {
+        } else if (currentApi_ == MuseumApi.HERMITAGE) {
             getArtworksFromHermitageMuseum(count)
         } else emptyList()
 
@@ -32,18 +32,21 @@ class ArtRepository(
         withContext(Dispatchers.IO) {
             val newArtworks =
                 fetchArtworksFromMetMuseum(count)
-            Log.d("ArtRepository", "Returning loaded artworks: ${newArtworks.size}")
+            Log.d("ArtRepository MET", "Returning loaded artworks: ${newArtworks.size}")
 
             return@withContext newArtworks
         }
 
-    private suspend fun getArtworksFromHermitageMuseum(count: Int): List<ArtObject> {
-        return withContext(Dispatchers.IO) {
+    private suspend fun getArtworksFromHermitageMuseum(count: Int): List<ArtObject> =
+        withContext(Dispatchers.IO) {
             val newArtworks =
                 fetchHermitageArtworks(count)
-            newArtworks
+
+            Log.d("ArtRepository Hermiage", "Returning loaded artworks: ${newArtworks.size}")
+
+            return@withContext newArtworks
         }
-    }
+
 
     fun setCurrentApi(currentApi_: MuseumApi) {
         currentApi.value = currentApi_
@@ -56,7 +59,7 @@ class ArtRepository(
             val response = metMuseumApi.getObjectByID(1)
             if (response.isSuccessful && response.body() != null) {
                 val ids = List(count) { Random.nextInt(0, 400000 + 1) }
-                Log.d("ArtRepository", "Total Object IDs fetched: ${ids.size}")
+                Log.d("ArtRepository MET", "Total Object IDs fetched: ${ids.size}")
 
                 val randomIds = ids.shuffled().take(count)
 
@@ -69,10 +72,10 @@ class ArtRepository(
                 }
 
                 val artworks = deferredArtworks.awaitAll().filterNotNull()
-                Log.d("ArtRepository", "Artworks retrieved from API: ${artworks.size}")
+                Log.d("ArtRepository MET", "Artworks retrieved from API: ${artworks.size}")
                 return@withContext artworks
             } else {
-                Log.e("ArtRepository", "Failed to fetch object IDs: ${response.code()}")
+                Log.e("ArtRepository MET", "Failed to fetch object IDs: ${response.code()}")
                 return@withContext emptyList<ArtObject>()
             }
         }
@@ -80,7 +83,7 @@ class ArtRepository(
     private suspend fun fetchHermitageArtworks(count: Int): List<ArtObject> =
         withContext(Dispatchers.IO) {
             val ids = List(count) { Random.nextInt(0, 900000 + 1) }
-            Log.d("ArtRepository", "Total Object IDs fetched: ${ids.size}")
+            Log.d("ArtRepository Hermitage", "Total Object IDs fetched: ${ids.size}")
 
             val randomIds = ids.shuffled().take(count)
 
@@ -92,7 +95,7 @@ class ArtRepository(
             }
 
             val artworks = deferredArtworks.awaitAll().filterNotNull()
-            Log.d("ArtRepository", "Artworks retrieved from API: ${artworks.size}")
+            Log.d("ArtRepository Hermitage", "Artworks retrieved from API: ${artworks.size}")
             return@withContext artworks
         }
 

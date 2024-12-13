@@ -3,7 +3,6 @@ package com.example.whatilike.screens
 import android.content.Context
 import android.util.Log
 import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import com.example.whatilike.data.ArtViewModel
@@ -20,7 +19,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil.compose.rememberImagePainter
 import com.example.whatilike.data.ArtObject
 import androidx.compose.ui.unit.IntOffset
 import kotlin.math.roundToInt
@@ -36,22 +34,19 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonColors
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
-import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.Coil
+import coil.ImageLoader
 import coil.compose.AsyncImagePainter
-import coil.compose.AsyncImagePainter.State.Empty.painter
 import coil.compose.rememberAsyncImagePainter
-import coil.request.CachePolicy
+import coil.request.ErrorResult
 import coil.request.ImageRequest
 import coil.request.SuccessResult
 import com.example.whatilike.R
@@ -61,11 +56,14 @@ import com.example.whatilike.ui.components.PaperBackground
 import com.example.whatilike.ui.theme.Brown
 import com.example.whatilike.ui.theme.DarkBeige
 import com.google.firebase.auth.FirebaseUser
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import okhttp3.OkHttpClient
+import java.security.cert.X509Certificate
+import javax.net.ssl.SSLContext
+import javax.net.ssl.TrustManager
+import javax.net.ssl.X509TrustManager
 import kotlin.math.absoluteValue
-
 
 @Composable
 fun GalleryScreen(
@@ -79,8 +77,12 @@ fun GalleryScreen(
 
     LaunchedEffect(isInit) {
         if (isInit) {
+            artViewModel.loadRandomArtworks(20, false)
             delay(80000)
-            artViewModel.loadRandomArtworks(150)
+            artViewModel.loadRandomArtworks(150, true)
+//            delay(80000)
+//            delay(80000)
+            artViewModel.loadRandomArtworks(150, false)
             isInit = false
         }
     }
@@ -153,9 +155,8 @@ fun GalleryScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     if (artViewModel.isLoading.value) {
-                            CircularProgressIndicator()
-                    }
-                    else {
+                        CircularProgressIndicator()
+                    } else {
                         Text(text = "No artworks found", fontSize = 18.sp, color = Color.Black)
                     }
                 }
@@ -171,15 +172,53 @@ fun GalleryScreen(
     }
 }
 
-suspend fun preloadImage(imageUrl: String?, context: Context) {
+suspend fun preloadImage(imageUrl: String?, context: Context, isSafeApi: Boolean) {
+    val unsafeTrustManager = object : X509TrustManager {
+        override fun checkClientTrusted(
+            chain: Array<java.security.cert.X509Certificate>,
+            authType: String
+        ) {
+        }
 
-    val imageLoader = Coil.imageLoader(context)
+        override fun checkServerTrusted(
+            chain: Array<java.security.cert.X509Certificate>,
+            authType: String
+        ) {
+        }
+
+        override fun getAcceptedIssuers(): Array<java.security.cert.X509Certificate> = arrayOf()
+    }
+
+    val sslContext = SSLContext.getInstance("SSL")
+    sslContext.init(
+        null,
+        arrayOf<TrustManager>(unsafeTrustManager),
+        java.security.SecureRandom()
+    )
+
+    val client = OkHttpClient.Builder()
+        .sslSocketFactory(sslContext.socketFactory, unsafeTrustManager)
+        .build()
+
+
+    val imageLoader = if (isSafeApi) Coil.imageLoader(context) else ImageLoader.Builder(context)
+        .okHttpClient(client)
+        .build()
+
     val request = ImageRequest.Builder(context)
         .data(imageUrl)
         .build()
 
     try {
-        val result = imageLoader.execute(request) as SuccessResult
+        val result = imageLoader.execute(request)
+
+        if (result is ErrorResult) {
+            Log.e("ImageLoadError",  "${result.throwable.message}")
+
+        }
+        if (result is SuccessResult) {
+            val drawable = result.drawable
+        }
     } catch (e: Exception) {
         e.printStackTrace()
     }
@@ -200,7 +239,12 @@ fun CardSwiper(
 
     LaunchedEffect(nextArtwork) {
         nextArtwork?.let {
-            preloadImage(it.primaryImage, context)
+            preloadImage(it.primaryImage + "?w=1000&h=1000", context, false)
+        }
+    }
+    LaunchedEffect(thirdArtwork) {
+        thirdArtwork?.let {
+            preloadImage(it.primaryImage + "?w=1000&h=1000", context, false)
         }
     }
 
@@ -208,10 +252,59 @@ fun CardSwiper(
         CircularProgressIndicator()
     }
 
+    val unsafeTrustManager = object : X509TrustManager {
+        override fun checkClientTrusted(chain: Array<X509Certificate>, authType: String) {}
+        override fun checkServerTrusted(chain: Array<X509Certificate>, authType: String) {}
+        override fun getAcceptedIssuers(): Array<X509Certificate> = arrayOf()
+    }
+
+    val sslContext = SSLContext.getInstance("SSL")
+    sslContext.init(null, arrayOf<TrustManager>(unsafeTrustManager), java.security.SecureRandom())
+
+    val client = OkHttpClient.Builder()
+        .sslSocketFactory(sslContext.socketFactory, unsafeTrustManager)
+        .build()
+
+    val imageLoader = remember {
+        ImageLoader.Builder(context)
+            .okHttpClient(client)
+            .build()
+    }
+
+    nextArtwork?.let { next ->
+        val painter = rememberAsyncImagePainter(
+            next.primaryImage + "?w=1000&h=1000", imageLoader = imageLoader
+        )
+        Image(
+            painter = painter,
+            contentDescription = next.title,
+            modifier = Modifier
+                .fillMaxSize()
+                .alpha(0.0f)
+        )
+    }
+
     Box(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
+        nextArtwork?.let {
+            val nextPainter = rememberAsyncImagePainter(
+                model = it.primaryImage + "?w=1000&h=1000",
+                imageLoader = imageLoader
+
+            )
+            Box(
+                modifier = Modifier.fillMaxSize()
+            ) {
+                Image(
+                    painter = nextPainter,
+                    contentDescription = "",
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
+        }
+
         currentArtwork?.let { artwork ->
             println("iiiha" + artwork.objectID.toString())
             ArtworkCard(
@@ -223,26 +316,16 @@ fun CardSwiper(
                 likedViewModel = likedViewModel
             )
         }
-        nextArtwork?.let { next ->
-            val painter = rememberAsyncImagePainter(next.primaryImage)
-            Image(
-                painter = painter,
-                contentDescription = next.title,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .alpha(0.0f)
-            )
-        }
-        thirdArtwork?.let { next ->
-            val painter = rememberAsyncImagePainter(next.primaryImage)
-            Image(
-                painter = painter,
-                contentDescription = next.title,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .alpha(0.0f)
-            )
-        }
+//        thirdArtwork?.let { next ->
+//            val painter = rememberAsyncImagePainter(next.primaryImage)
+//            Image(
+//                painter = painter,
+//                contentDescription = next.title,
+//                modifier = Modifier
+//                    .fillMaxSize()
+//                    .alpha(0.0f)
+//            )
+//        }
     }
 }
 
@@ -266,12 +349,31 @@ fun ArtworkCard(
     val maxTiltAngle = 3f
     val maxOffset = 1000f
     val tiltAngle = (offsetX.value / maxOffset) * maxTiltAngle
-    val alpha_ = 1f - (offsetX.value.absoluteValue / maxOffset).coerceIn(0f, 1f)
+//    val alpha_ = 1f - (offsetX.value.absoluteValue / maxOffset).coerceIn(0f, 1f)
+    val alpha_ = 1.0f
 
-//    println("SOS: Image URL - ${currentArtwork.value.primaryImage}, ID - ${currentArtwork.value.objectID}")
+    println("SOS: Image URL - ${currentArtwork.value.primaryImage}, ID - ${currentArtwork.value.objectID}")
 
 
     val coroutineScope = rememberCoroutineScope()
+    val unsafeTrustManager = object : X509TrustManager {
+        override fun checkClientTrusted(chain: Array<X509Certificate>, authType: String) {}
+        override fun checkServerTrusted(chain: Array<X509Certificate>, authType: String) {}
+        override fun getAcceptedIssuers(): Array<X509Certificate> = arrayOf()
+    }
+
+    val sslContext = SSLContext.getInstance("SSL")
+    sslContext.init(null, arrayOf<TrustManager>(unsafeTrustManager), java.security.SecureRandom())
+    val client = OkHttpClient.Builder()
+        .sslSocketFactory(sslContext.socketFactory, unsafeTrustManager)
+        .build()
+
+    val context = LocalContext.current
+    val imageLoader = remember {
+        ImageLoader.Builder(context)
+            .okHttpClient(client)
+            .build()
+    }
 
     Box(
         modifier = Modifier
@@ -363,7 +465,9 @@ fun ArtworkCard(
                 }
             } else {
                 val painter = rememberAsyncImagePainter(
-                    model = artwork.primaryImage
+                    model = artwork.primaryImage + "?w=1000&h=1000",
+                    imageLoader = imageLoader
+
                 )
                 Box(modifier = Modifier.fillMaxSize()) {
                     Image(

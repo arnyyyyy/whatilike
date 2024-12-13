@@ -2,6 +2,9 @@ package com.example.whatilike.cached.user
 
 
 import android.content.Context
+import android.util.Log
+import androidx.compose.runtime.State
+import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -29,8 +32,8 @@ class LikedArtworksViewModel(
     private val _likedArtworks = MutableStateFlow<List<ArtObject>>(emptyList())
     val likedArtworks: StateFlow<List<ArtObject>> = _likedArtworks
 
-    private val _isLoading = MutableStateFlow(false)
-    val isLoading: StateFlow<Boolean> = _isLoading
+    private val _isLoading = mutableStateOf(true)
+    val isLoading: State<Boolean> = _isLoading
 
     fun loadLikedArtworks() {
         val user = FirebaseAuth.getInstance().currentUser
@@ -44,7 +47,7 @@ class LikedArtworksViewModel(
 
                     val likedIds = localLikedArtworks?.likedArtworksIds ?: emptyList()
 
-                    if (likedIds.isEmpty()) {
+                    if (likedIds.size < 10) {
                         val remoteIds = fetchLikedArtworkIds(firebaseUser.uid)
                         saveToLocalDatabase(firebaseUser.uid, remoteIds)
                         val artworks = fetchArtworksByIds(remoteIds)
@@ -56,6 +59,7 @@ class LikedArtworksViewModel(
                 } catch (e: Exception) {
                     e.printStackTrace()
                 } finally {
+                    Log.d("LIKED", "loading LIKED succeded")
                     _isLoading.value = false
                 }
             }

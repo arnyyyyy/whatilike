@@ -8,6 +8,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -27,7 +28,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
@@ -47,51 +50,66 @@ import com.example.whatilike.ui.theme.UltraLightGrey
 import kotlin.math.roundToInt
 
 @Composable
-fun FavouritesScreen(viewModel: LikedArtworksViewModel, foldersViewModel : FolderViewModel) {
+fun FavouritesScreen(viewModel: LikedArtworksViewModel, foldersViewModel: FolderViewModel) {
     val likedArtworks by viewModel.likedArtworks.collectAsState()
     val folders by foldersViewModel.folders.collectAsState()
 
-    val isLoading by viewModel.isLoading.collectAsState()
+//    LaunchedEffect(Unit) {
+//        viewModel.loadLikedArtworks()
+//    }
 
-    LaunchedEffect(Unit) {
-        viewModel.loadLikedArtworks()
-    }
+//    LaunchedEffect(Unit) {
+//        foldersViewModel.loadFolders()
+//    }
+//
 
-    LaunchedEffect(Unit) {
-        foldersViewModel.loadFolders()
-    }
-
-
-    if (isLoading) {
+    if (viewModel.isLoading.value) {
         CircularProgressIndicator()
     }
 
-    if(folders.isEmpty()) {
+    if (folders.isEmpty()) {
         Box(modifier = Modifier.fillMaxSize()) {
             PaperBackground(color = DarkBeige, modifier = Modifier.fillMaxSize())
             Column(modifier = Modifier.fillMaxSize()) {
                 Spacer(modifier = Modifier.height(16.dp))
 //                Row() {
-                    Text(
-                        text = "Favourites",
-                        fontFamily = FontFamily.Monospace,
-                        color = Color.Black,
-                        modifier = Modifier.align(Alignment.CenterHorizontally)
-                            .padding(bottom = 10.dp)
-                    )
+                Text(
+                    text = "Favourites",
+                    fontFamily = FontFamily.Monospace,
+                    color = Color.Black,
+                    modifier = Modifier
+                        .align(Alignment.CenterHorizontally)
+                        .padding(bottom = 10.dp)
+                )
 
 //                    IconButton(onClick = { foldersViewModel.addFolder("folder1") }) { }
 //                }
 
                 if (likedArtworks.isEmpty()) {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text(
-                            text = "No liked artworks",
-                            fontFamily = FontFamily.Monospace,
-                            color = Color.Black
-                        )
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (viewModel.isLoading.value) {
+                            CircularProgressIndicator()
+                        } else {
+                            Text(text = "No liked artworks", fontSize = 18.sp, color = Color.Black)
+                        }
                     }
+
+
+//                if (likedArtworks.isEmpty() ) {
+//                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+//                        Text(
+//                            text = "No liked artworks",
+//                            fontFamily = FontFamily.Monospace,
+//                            color = Color.Black
+//                        )
+//                    }
                 } else {
+                    Column(modifier = Modifier.fillMaxSize()) {
+
+                    }
                     LazyColumn(modifier = Modifier.fillMaxSize()) {
                         items(likedArtworks) { artwork ->
                             LikedArtworkCard(
@@ -103,9 +121,7 @@ fun FavouritesScreen(viewModel: LikedArtworksViewModel, foldersViewModel : Folde
                 }
             }
         }
-    }
-    else {
-
+    } else {
     }
 }
 
@@ -127,10 +143,10 @@ fun LikedArtworkCard(artwork: ArtObject, onDeleteClicked: () -> Unit) {
         .padding(8.dp)
         .background(color = UltraLightGrey.copy(alpha = 0.6f))
         .border(
-            border = BorderStroke(0.3.dp, Color.Black) ,
+            border = BorderStroke(0.3.dp, Color.Black),
             shape = RoundedCornerShape(4.dp)
         )
-        .pointerInput(Unit){
+        .pointerInput(Unit) {
             detectHorizontalDragGestures { _, dragAmount ->
                 if (dragAmount < 0) {
                     offsetX += dragAmount
@@ -169,7 +185,7 @@ fun LikedArtworkCard(artwork: ArtObject, onDeleteClicked: () -> Unit) {
 
                     Image(
                         painter = rememberAsyncImagePainter(
-                            model = artwork.primaryImage,
+                            model = artwork.primaryImage + "?w=1000&h=1000",
                             imageLoader = Coil.imageLoader(context)
                         ),
                         contentDescription = artwork.title,
@@ -205,11 +221,24 @@ fun LikedArtworkCard(artwork: ArtObject, onDeleteClicked: () -> Unit) {
 
     if (showDialog) {
         Dialog(onDismissRequest = { showDialog = false }) {
+            var scale by remember { mutableStateOf(1f) }
+            var offset by remember { mutableStateOf(Offset(0f, 0f)) }
+
             Box(
                 Modifier
                     .fillMaxWidth()
                     .background(Color.Black.copy(alpha = 0.8f))
+                    .pointerInput(Unit) {
+                        detectTransformGestures { _, pan, zoom, _ ->
+                            scale *= zoom
+                            offset = Offset(
+                                x = offset.x + pan.x,
+                                y = offset.y + pan.y
+                            )
+                        }
+                    }
             ) {
+
                 Column(
                     Modifier
                         .fillMaxWidth()
@@ -217,11 +246,16 @@ fun LikedArtworkCard(artwork: ArtObject, onDeleteClicked: () -> Unit) {
                         .padding(top = 48.dp)
                 ) {
                     Image(
-                        painter = rememberAsyncImagePainter(artwork.primaryImage),
+                        painter = rememberAsyncImagePainter(artwork.primaryImage + "?w=1000&h=1000"),
                         contentDescription = artwork.title,
                         modifier = Modifier
-                            .fillMaxWidth()
                             .padding(16.dp)
+                            .graphicsLayer(
+                                scaleX = scale,
+                                scaleY = scale,
+                                translationX = offset.x,
+                                translationY = offset.y
+                            )
                     )
                     Text(
                         text = artwork.title,
@@ -251,8 +285,8 @@ fun LikedArtworkCard(artwork: ArtObject, onDeleteClicked: () -> Unit) {
                     Spacer(modifier = Modifier.width(16.dp))
 
                     IconButton(
-                        onClick  = {
-                            downloadArtwork(context, artwork.primaryImage!!)
+                        onClick = {
+                            downloadArtwork(context, artwork.primaryImage!! + "?w=1000&h=1000")
                         },
                         modifier = Modifier.background(Color.Black.copy(alpha = 0.6f), CircleShape)
                     ) {

@@ -33,6 +33,8 @@ import com.example.whatilike.screens.SplashScreen
 import com.google.firebase.appcheck.FirebaseAppCheck
 import com.google.firebase.appcheck.playintegrity.PlayIntegrityAppCheckProviderFactory
 import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 
 class MainActivity : ComponentActivity() {
@@ -61,11 +63,12 @@ class MainActivity : ComponentActivity() {
         )
 
         val models = initializeViewModels()
-        val userProfileViewModel :UserProfileViewModel = models["userProfile"] as UserProfileViewModel
-        val artViewModel : ArtViewModel =  models["art"] as ArtViewModel
+        val userProfileViewModel: UserProfileViewModel =
+            models["userProfile"] as UserProfileViewModel
+        val artViewModel: ArtViewModel = models["art"] as ArtViewModel
 
-        val likedArtViewModel : LikedArtworksViewModel = models["liked"] as LikedArtworksViewModel
-        val foldersViewModel : FolderViewModel = models["folders"] as FolderViewModel
+        val likedArtViewModel: LikedArtworksViewModel = models["liked"] as LikedArtworksViewModel
+        val foldersViewModel: FolderViewModel = models["folders"] as FolderViewModel
 
 
 //        FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
@@ -85,12 +88,23 @@ class MainActivity : ComponentActivity() {
                 var isLoading by remember { mutableStateOf(true) }
 
                 LaunchedEffect(Unit) {
-                    artViewModel.loadRandomArtworks(20)
-                    likedArtViewModel.loadLikedArtworks()
+                    coroutineScope {
+                        val likedArtworksDeferred = async {
+                            likedArtViewModel.loadLikedArtworks()
+                        }
+                        val randomArtworksDeferred = async {
+                            artViewModel.loadRandomArtworks(20, true)
+                        }
+
+                        likedArtworksDeferred.await()
+                        randomArtworksDeferred.await()
+                    }
+
                     while (artViewModel.isLoading.value) {
                         delay(100)
                     }
                     isLoading = false
+
                 }
 
                 SplashScreen(
@@ -120,7 +134,11 @@ class MainActivity : ComponentActivity() {
     private fun initializeViewModels(): Map<String, Any> {
         val userProfileDao = UserDatabase.getInstance(this).userProfileDao()
         val userViewModelFactory =
-            UserProfileViewModelFactory(userProfileDao = userProfileDao, FirebaseFirestore.getInstance(), this)
+            UserProfileViewModelFactory(
+                userProfileDao = userProfileDao,
+                FirebaseFirestore.getInstance(),
+                this
+            )
         val userProfileViewModel =
             ViewModelProvider(this, userViewModelFactory)[UserProfileViewModel::class.java]
 
@@ -128,7 +146,10 @@ class MainActivity : ComponentActivity() {
         val likedArtworksViewModelFactory =
             LikedArtworksViewModelFactory(likedArtworksDao, FirebaseFirestore.getInstance(), this)
         val likedArtworksViewModel =
-            ViewModelProvider(this, likedArtworksViewModelFactory)[LikedArtworksViewModel::class.java]
+            ViewModelProvider(
+                this,
+                likedArtworksViewModelFactory
+            )[LikedArtworksViewModel::class.java]
 
         val foldersDao = ArtworkFoldersDatabase.getInstance(this).folders()
         val foldersViewModelFactory =
@@ -180,10 +201,21 @@ class MainActivity : ComponentActivity() {
 //    }
 
     @Composable
-    fun MainScreen(userProfileViewModel: UserProfileViewModel, artViewModel: ArtViewModel, likedArtworksViewModel: LikedArtworksViewModel, foldersViewModel : FolderViewModel) {
+    fun MainScreen(
+        userProfileViewModel: UserProfileViewModel,
+        artViewModel: ArtViewModel,
+        likedArtworksViewModel: LikedArtworksViewModel,
+        foldersViewModel: FolderViewModel
+    ) {
         if (currentUser != null) {
             userProfileViewModel.initializeUserProfileFromFirebase()
-            NavigationGraph(currentUser, userProfileViewModel, artViewModel, likedArtworksViewModel =likedArtworksViewModel, foldersViewModel = foldersViewModel) { signOut() }
+            NavigationGraph(
+                currentUser,
+                userProfileViewModel,
+                artViewModel,
+                likedArtworksViewModel = likedArtworksViewModel,
+                foldersViewModel = foldersViewModel
+            ) { signOut() }
         } else {
             AuthScreen(onSignInClick = { signInWithGoogle() })
         }
