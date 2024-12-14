@@ -44,41 +44,32 @@ import com.example.whatilike.cached.user.UserProfileViewModel
 
 @Composable
 fun ProfileScreen(user: FirebaseUser?, signOut: () -> Unit,
-    userProfileViewModel: UserProfileViewModel
+                  viewModel: UserProfileViewModel
 ) {
-    val userProfile by userProfileViewModel.currentUserProfile.collectAsState()
-    val isLoading by userProfileViewModel.isLoading.collectAsState()
-    var isEditing by remember { mutableStateOf(false) }
-
+    val userProfile by viewModel.currentUserProfile.collectAsState()
     var nickname by remember { mutableStateOf(userProfile?.nickname.orEmpty()) }
+
+    var isEditing by remember { mutableStateOf(false) }
     val keyboardController = LocalSoftwareKeyboardController.current
-    var bitmap by remember { mutableStateOf<Bitmap?>(null) }
+
 
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent(),
         onResult = { uri ->
             uri?.let {
                 user?.uid?.let { userId ->
-                    userProfileViewModel.uploadUserPhoto(userId, it)
+                    viewModel.uploadUserPhoto(userId, it)
                 }
             }
         }
     )
-
-    LaunchedEffect(user?.uid) {
-        user?.uid?.let { userId ->
-            userProfileViewModel.loadUserProfile(userId)
-            bitmap = userProfileViewModel.getLocalImage(userId)
-
-        }
-    }
 
     Column(
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        if (isLoading) {
+        if (viewModel.isLoading.value) {
             Text(text = "Loading...", fontFamily = FontFamily.Monospace)
         } else {
             Spacer(modifier = Modifier.height(50.dp))
@@ -97,9 +88,9 @@ fun ProfileScreen(user: FirebaseUser?, signOut: () -> Unit,
             )
 
             Spacer(modifier = Modifier.height(16.dp))
-            if (bitmap != null) {
+            if (viewModel.bitmap.value != null) {
                 Image(
-                    bitmap = bitmap!!.asImageBitmap(),
+                    bitmap = viewModel.bitmap.value!!.asImageBitmap(),
                     contentDescription = "User Photo",
                     modifier = Modifier.size(240.dp)
                 )
@@ -147,7 +138,7 @@ fun ProfileScreen(user: FirebaseUser?, signOut: () -> Unit,
                     keyboardActions = KeyboardActions(
                         onDone = {
                             userProfile?.uid?.let { userId ->
-                                userProfileViewModel.updateNickname(userId, nickname)
+                                viewModel.updateNickname(userId, nickname)
                             }
                             keyboardController?.hide()
                         }

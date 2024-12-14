@@ -58,7 +58,6 @@ class ArtViewModel(context: Context) : ViewModel() {
         viewModelScope.launch {
             try {
                 _isLoading.value = true
-                // Запускаем обе загрузки параллельно
                 val loadMet = async { loadRandomArtworks(20, true) }
                 val loadHermitage = async { loadRandomArtworks(20, false) }
 

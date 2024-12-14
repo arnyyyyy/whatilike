@@ -17,6 +17,9 @@ import kotlinx.coroutines.launch
 import java.io.File
 import java.io.FileOutputStream
 import android.content.Context
+import android.util.Log
+import androidx.compose.runtime.State
+import androidx.compose.runtime.mutableStateOf
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.tasks.await
@@ -26,14 +29,34 @@ import kotlinx.coroutines.withContext
 class UserProfileViewModel(
     private val userProfileDao: UserProfileDao,
     private val firestore: FirebaseFirestore = Firebase.firestore,
-    private val context: Context
-) : ViewModel() {
+    private val context: Context) : ViewModel() {
 
     private val _currentUserProfile = MutableStateFlow<UserProfile?>(null)
     val currentUserProfile: StateFlow<UserProfile?> = _currentUserProfile
+    val user = FirebaseAuth.getInstance().currentUser
+    val uid = mutableStateOf("")
 
-    private val _isLoading = MutableStateFlow(false)
-    val isLoading: StateFlow<Boolean> = _isLoading
+    var bitmap = mutableStateOf<Bitmap?>(null)
+
+    private val _isLoading = mutableStateOf(true)
+    val isLoading: State<Boolean> = _isLoading
+
+    init {
+        viewModelScope.launch {
+            try {
+                _isLoading.value = true
+                uid.value = user!!.uid
+                loadUserProfile(user.uid)
+                bitmap.value = getLocalImage(uid.value)
+
+                Log.d("User Profile", "User authorized successfully ")
+            } catch (e: Exception) {
+                Log.e("User Profile", "Failed to authorize", e)
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
 
     fun initializeUserProfileFromFirebase() {
         viewModelScope.launch {
@@ -64,11 +87,8 @@ class UserProfileViewModel(
     }
 
 
-    fun loadUserProfile(userId: String) {
-        viewModelScope.launch {
-            _isLoading.value = true
-
-            try {
+    suspend fun loadUserProfile(userId: String) {
+        try {
                 val localProfile = withContext(Dispatchers.IO) {
                     userProfileDao.getUserProfile(userId)
                 }
@@ -95,7 +115,6 @@ class UserProfileViewModel(
                 _isLoading.value = false
             }
         }
-    }
 
     suspend fun getLocalImage(userId: String): Bitmap? {
         return withContext(Dispatchers.IO) {

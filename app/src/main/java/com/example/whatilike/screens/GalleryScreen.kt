@@ -226,16 +226,6 @@ fun CardSwiper(
                 likedViewModel = likedViewModel
             )
         }
-//        thirdArtwork?.let { next ->
-//            val painter = rememberAsyncImagePainter(next.primaryImage)
-//            Image(
-//                painter = painter,
-//                contentDescription = next.title,
-//                modifier = Modifier
-//                    .fillMaxSize()
-//                    .alpha(0.0f)
-//            )
-//        }
     }
 }
 

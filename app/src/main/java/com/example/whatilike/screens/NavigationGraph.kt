@@ -55,7 +55,7 @@ fun NavigationGraph(
                 ProfileScreen(
                     user = user,
                     signOut = onSignOut,
-                    userProfileViewModel = userProfileViewModel
+                    viewModel = userProfileViewModel
                 )
             }
         }
