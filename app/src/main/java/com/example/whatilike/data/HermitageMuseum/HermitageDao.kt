@@ -49,7 +49,7 @@ class HermitageMuseumApiService {
                         } else {
                             it
                         }
-                    }
+                    } + "?w=1000&h=1000"
 
 
                 val title = document.select("meta[property=og:title]").attr("content")

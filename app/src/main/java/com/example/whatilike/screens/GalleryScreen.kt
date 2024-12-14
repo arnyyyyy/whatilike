@@ -1,6 +1,5 @@
 package com.example.whatilike.screens
 
-import android.content.Context
 import android.util.Log
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.animateFloatAsState
@@ -42,13 +41,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.lifecycle.viewmodel.compose.viewModel
-import coil.Coil
-import coil.ImageLoader
 import coil.compose.AsyncImagePainter
 import coil.compose.rememberAsyncImagePainter
-import coil.request.ErrorResult
-import coil.request.ImageRequest
-import coil.request.SuccessResult
 import com.example.whatilike.R
 import com.example.whatilike.cached.user.LikedArtworksViewModel
 import com.example.whatilike.data.MuseumApi
@@ -56,13 +50,7 @@ import com.example.whatilike.ui.components.PaperBackground
 import com.example.whatilike.ui.theme.Brown
 import com.example.whatilike.ui.theme.DarkBeige
 import com.google.firebase.auth.FirebaseUser
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import okhttp3.OkHttpClient
-import java.security.cert.X509Certificate
-import javax.net.ssl.SSLContext
-import javax.net.ssl.TrustManager
-import javax.net.ssl.X509TrustManager
 import kotlin.math.absoluteValue
 
 @Composable
@@ -156,57 +144,6 @@ fun GalleryScreen(
     }
 }
 
-suspend fun preloadImage(imageUrl: String?, context: Context, isSafeApi: Boolean) {
-    val unsafeTrustManager = object : X509TrustManager {
-        override fun checkClientTrusted(
-            chain: Array<java.security.cert.X509Certificate>,
-            authType: String
-        ) {
-        }
-
-        override fun checkServerTrusted(
-            chain: Array<java.security.cert.X509Certificate>,
-            authType: String
-        ) {
-        }
-
-        override fun getAcceptedIssuers(): Array<java.security.cert.X509Certificate> = arrayOf()
-    }
-
-    val sslContext = SSLContext.getInstance("SSL")
-    sslContext.init(
-        null,
-        arrayOf<TrustManager>(unsafeTrustManager),
-        java.security.SecureRandom()
-    )
-
-    val client = OkHttpClient.Builder()
-        .sslSocketFactory(sslContext.socketFactory, unsafeTrustManager)
-        .build()
-
-
-    val imageLoader = if (isSafeApi) Coil.imageLoader(context) else ImageLoader.Builder(context)
-        .okHttpClient(client)
-        .build()
-
-    val request = ImageRequest.Builder(context)
-        .data(imageUrl)
-        .build()
-
-    try {
-        val result = imageLoader.execute(request)
-
-        if (result is ErrorResult) {
-            Log.e("ImageLoadError",  "${result.throwable.message}")
-
-        }
-        if (result is SuccessResult) {
-            val drawable = result.drawable
-        }
-    } catch (e: Exception) {
-        e.printStackTrace()
-    }
-}
 
 @Composable
 fun CardSwiper(
@@ -219,16 +156,25 @@ fun CardSwiper(
     val context = LocalContext.current
 
     val nextArtwork = artworks.getOrNull(currentIndex + 1)
-    val thirdArtwork = artworks.getOrNull(currentIndex + 2)
 
     LaunchedEffect(nextArtwork) {
         nextArtwork?.let {
-            preloadImage(it.primaryImage + "?w=1000&h=1000", context, false)
+            viewModel.preloadImage(it.primaryImage, context)
         }
     }
-    LaunchedEffect(thirdArtwork) {
-        thirdArtwork?.let {
-            preloadImage(it.primaryImage + "?w=1000&h=1000", context, false)
+
+    val artworksToPreload = listOf(
+        artworks.getOrNull(currentIndex + 2),
+        artworks.getOrNull(currentIndex + 3),
+        artworks.getOrNull(currentIndex + 4),
+        artworks.getOrNull(currentIndex + 5),
+        )
+
+    artworksToPreload.forEach { artwork ->
+        artwork?.let {
+            LaunchedEffect(it) {
+                viewModel.preloadImage(it.primaryImage, context)
+            }
         }
     }
 
@@ -236,28 +182,9 @@ fun CardSwiper(
         CircularProgressIndicator()
     }
 
-    val unsafeTrustManager = object : X509TrustManager {
-        override fun checkClientTrusted(chain: Array<X509Certificate>, authType: String) {}
-        override fun checkServerTrusted(chain: Array<X509Certificate>, authType: String) {}
-        override fun getAcceptedIssuers(): Array<X509Certificate> = arrayOf()
-    }
-
-    val sslContext = SSLContext.getInstance("SSL")
-    sslContext.init(null, arrayOf<TrustManager>(unsafeTrustManager), java.security.SecureRandom())
-
-    val client = OkHttpClient.Builder()
-        .sslSocketFactory(sslContext.socketFactory, unsafeTrustManager)
-        .build()
-
-    val imageLoader = remember {
-        ImageLoader.Builder(context)
-            .okHttpClient(client)
-            .build()
-    }
-
     nextArtwork?.let { next ->
         val painter = rememberAsyncImagePainter(
-            next.primaryImage + "?w=1000&h=1000", imageLoader = imageLoader
+            next.primaryImage, imageLoader = viewModel.imageLoader.value
         )
         Image(
             painter = painter,
@@ -274,8 +201,8 @@ fun CardSwiper(
     ) {
         nextArtwork?.let {
             val nextPainter = rememberAsyncImagePainter(
-                model = it.primaryImage + "?w=1000&h=1000",
-                imageLoader = imageLoader
+                model = it.primaryImage,
+                imageLoader = viewModel.imageLoader.value
 
             )
             Box(
@@ -290,13 +217,12 @@ fun CardSwiper(
         }
 
         currentArtwork?.let { artwork ->
-            println("iiiha" + artwork.objectID.toString())
             ArtworkCard(
                 artwork = artwork,
                 onSwiped = {
                     currentIndex = (currentIndex + 1) % artworks.size
                 },
-                artViewModel = viewModel,
+                viewModel = viewModel,
                 likedViewModel = likedViewModel
             )
         }
@@ -317,7 +243,7 @@ fun CardSwiper(
 fun ArtworkCard(
     artwork: ArtObject,
     onSwiped: () -> Unit,
-    artViewModel: ArtViewModel,
+    viewModel: ArtViewModel,
     likedViewModel: LikedArtworksViewModel
 ) {
     var isFlipped by remember { mutableStateOf(false) }
@@ -333,31 +259,12 @@ fun ArtworkCard(
     val maxTiltAngle = 3f
     val maxOffset = 1000f
     val tiltAngle = (offsetX.value / maxOffset) * maxTiltAngle
-//    val alpha_ = 1f - (offsetX.value.absoluteValue / maxOffset).coerceIn(0f, 1f)
     val alpha_ = 1.0f
 
-    println("SOS: Image URL - ${currentArtwork.value.primaryImage}, ID - ${currentArtwork.value.objectID}")
+//    println("SOS: Image URL - ${currentArtwork.value.primaryImage}, ID - ${currentArtwork.value.objectID}")
 
 
     val coroutineScope = rememberCoroutineScope()
-    val unsafeTrustManager = object : X509TrustManager {
-        override fun checkClientTrusted(chain: Array<X509Certificate>, authType: String) {}
-        override fun checkServerTrusted(chain: Array<X509Certificate>, authType: String) {}
-        override fun getAcceptedIssuers(): Array<X509Certificate> = arrayOf()
-    }
-
-    val sslContext = SSLContext.getInstance("SSL")
-    sslContext.init(null, arrayOf<TrustManager>(unsafeTrustManager), java.security.SecureRandom())
-    val client = OkHttpClient.Builder()
-        .sslSocketFactory(sslContext.socketFactory, unsafeTrustManager)
-        .build()
-
-    val context = LocalContext.current
-    val imageLoader = remember {
-        ImageLoader.Builder(context)
-            .okHttpClient(client)
-            .build()
-    }
 
     Box(
         modifier = Modifier
@@ -449,8 +356,8 @@ fun ArtworkCard(
                 }
             } else {
                 val painter = rememberAsyncImagePainter(
-                    model = artwork.primaryImage + "?w=1000&h=1000",
-                    imageLoader = imageLoader
+                    model = artwork.primaryImage,
+                    imageLoader = viewModel.imageLoader.value
 
                 )
                 Box(modifier = Modifier.fillMaxSize()) {

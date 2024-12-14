@@ -171,7 +171,7 @@ fun LikedArtworkCard(artwork: ArtObject, onDeleteClicked: () -> Unit) {
 
                     Image(
                         painter = rememberAsyncImagePainter(
-                            model = artwork.primaryImage + "?w=1000&h=1000",
+                            model = artwork.primaryImage,
                             imageLoader = Coil.imageLoader(context)
                         ),
                         contentDescription = artwork.title,
@@ -232,7 +232,7 @@ fun LikedArtworkCard(artwork: ArtObject, onDeleteClicked: () -> Unit) {
                         .padding(top = 48.dp)
                 ) {
                     Image(
-                        painter = rememberAsyncImagePainter(artwork.primaryImage + "?w=1000&h=1000"),
+                        painter = rememberAsyncImagePainter(artwork.primaryImage),
                         contentDescription = artwork.title,
                         modifier = Modifier
                             .padding(16.dp)
@@ -272,7 +272,7 @@ fun LikedArtworkCard(artwork: ArtObject, onDeleteClicked: () -> Unit) {
 
                     IconButton(
                         onClick = {
-                            downloadArtwork(context, artwork.primaryImage!! + "?w=1000&h=1000")
+                            downloadArtwork(context, artwork.primaryImage!!)
                         },
                         modifier = Modifier.background(Color.Black.copy(alpha = 0.6f), CircleShape)
                     ) {

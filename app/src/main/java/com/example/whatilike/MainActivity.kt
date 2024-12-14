@@ -36,6 +36,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     private lateinit var auth: FirebaseAuth
@@ -87,33 +88,25 @@ class MainActivity : ComponentActivity() {
             WhatilikeTheme {
                 var isLoading by remember { mutableStateOf(true) }
 
+                val coroutineScope = rememberCoroutineScope()
                 LaunchedEffect(Unit) {
-//                    artViewModel.loadRandomArtworks(20, true)
-                    likedArtViewModel.loadLikedArtworks()
+                    coroutineScope.launch {
+                        likedArtViewModel.loadLikedArtworks()
+                    }
+                    coroutineScope.launch {
+                        artViewModel.loadRandomArtworks(100, true)
+//                        artViewModel.loadArtworks(true)
+                    }
+                    coroutineScope.launch {
+//                        artViewModel.loadArtworks(false)
+                        artViewModel.loadRandomArtworks(100, false)
 
-
-//                    coroutineScope {
-//                        val likedArtworksDeferred = async {
-//                            likedArtViewModel.loadLikedArtworks()
-//                        }
-
-//                        likedArtworksDeferred.await()
-//                        randomArtworksDeferred.await()
-//                    }
-
-//                    while (artViewModel.isLoading.value) {
-//                        delay(100)
-//                    }
-
+                    }
                     delay(10000)
+
+                    isLoading = false
+
                 }
-
-                isLoading = false
-
-                artViewModel.loadArtworks(true)
-                artViewModel.loadArtworks(false)
-
-
 
                 SplashScreen(
                     isLoading = isLoading,
