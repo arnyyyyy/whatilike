@@ -93,6 +93,7 @@ class MainActivity : ComponentActivity() {
                     coroutineScope.launch {
                         likedArtViewModel.loadLikedArtworks()
                     }
+                    delay(10000)
                     coroutineScope.launch {
                         artViewModel.loadRandomArtworks(100, true)
 //                        artViewModel.loadArtworks(true)
@@ -102,7 +103,6 @@ class MainActivity : ComponentActivity() {
                         artViewModel.loadRandomArtworks(100, false)
 
                     }
-                    delay(10000)
 
                     isLoading = false
 

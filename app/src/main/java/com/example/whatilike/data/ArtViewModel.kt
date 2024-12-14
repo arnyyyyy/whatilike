@@ -12,6 +12,7 @@ import coil.ImageLoader
 import coil.request.ErrorResult
 import coil.request.ImageRequest
 import coil.request.SuccessResult
+import coil.util.DebugLogger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.GlobalScope.coroutineContext
 import kotlinx.coroutines.async
@@ -30,48 +31,16 @@ class ArtViewModel(context: Context) : ViewModel() {
 
     private val _metArtworks = MutableStateFlow<List<ArtObject>>(emptyList())
     private val _hermitageArtworks = MutableStateFlow<List<ArtObject>>(emptyList())
-    var artworks: MutableStateFlow<List<ArtObject>> = _metArtworks
+    var artworks: MutableStateFlow<List<ArtObject>> = _hermitageArtworks
 
     private var currentMetIndex = mutableStateOf(0)
     private var currentHermitageIndex = mutableStateOf(0)
     var currentIndex = mutableStateOf(0)
 
-    private var currentApi = mutableStateOf(MuseumApi.MET)
+    private var currentApi = mutableStateOf(MuseumApi.HERMITAGE)
 
     private val _isLoading = mutableStateOf(true)
     val isLoading: State<Boolean> = _isLoading
-
-    val imageLoader = mutableStateOf(Coil.imageLoader(context))
-
-    init {
-//        CoroutineScope(coroutineContext).launch {
-//            val load = async { loadRandomArtworks(20, true)}
-//            val load1 = async { loadRandomArtworks(20, false) }
-//
-//            load.await()
-////            awaitAll(load1, load)
-//
-////
-////            preloadImage(artworks.value.getOrNull(0)?.primaryImage + "?w=1000&h=1000", context)
-//
-//        }
-        viewModelScope.launch {
-            try {
-                _isLoading.value = true
-                val loadMet = async { loadRandomArtworks(20, true) }
-                val loadHermitage = async { loadRandomArtworks(20, false) }
-
-                loadMet.await()
-//                loadHermitage.await()
-
-                Log.d("ArtViewModel", "Artworks loaded successfully.")
-            } catch (e: Exception) {
-                Log.e("ArtViewModel", "Failed to load artworks during init", e)
-            } finally {
-                _isLoading.value = false
-            }
-        }
-    }
 
     private val unsafeTrustManager = object : X509TrustManager {
         override fun checkClientTrusted(
@@ -97,6 +66,32 @@ class ArtViewModel(context: Context) : ViewModel() {
         .sslSocketFactory(sslContext.socketFactory, unsafeTrustManager)
         .build()
 
+    val imageLoader = mutableStateOf(ImageLoader.Builder(_context)
+        .okHttpClient(client)
+        .logger(DebugLogger())
+        .build())
+//        mutableStateOf(Coil.imageLoader(context).newBuilder().logger(DebugLogger()).build())
+
+    init {
+        viewModelScope.launch {
+            try {
+                _isLoading.value = true
+                async { loadRandomArtworks(20, true) }
+                async { loadRandomArtworks(20, false) }
+
+//                loadMet.await()
+//                loadHermitage.await()
+
+                Log.d("ArtViewModel", "Artworks loaded successfully.")
+            } catch (e: Exception) {
+                Log.e("ArtViewModel", "Failed to load artworks during init", e)
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+
+
 
     fun setCurrentApi(newApi: MuseumApi) {
         repository.setCurrentApi(newApi)
@@ -116,7 +111,7 @@ class ArtViewModel(context: Context) : ViewModel() {
             MuseumApi.MET -> {
                 artworks = _metArtworks
                 currentIndex.value = currentMetIndex.value
-                imageLoader.value = Coil.imageLoader(_context)
+                imageLoader.value = Coil.imageLoader(_context).newBuilder().logger(DebugLogger()).build()
 
             }
             else -> {
@@ -124,6 +119,7 @@ class ArtViewModel(context: Context) : ViewModel() {
                 currentIndex.value = currentHermitageIndex.value
                 imageLoader.value = ImageLoader.Builder(_context)
                     .okHttpClient(client)
+                    .logger(DebugLogger())
                     .build()
             }
         }
@@ -149,13 +145,6 @@ class ArtViewModel(context: Context) : ViewModel() {
             e.printStackTrace()
         }
     }
-
-    fun loadArtworks(isMainApi: Boolean) {
-        viewModelScope.launch {
-            loadRandomArtworks(count = 100, isMainApi = isMainApi)
-        }
-    }
-
 
     suspend fun loadRandomArtworks(count: Int, isMainApi: Boolean) {
             try {

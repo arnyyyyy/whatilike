@@ -155,6 +155,8 @@ fun CardSwiper(
     val currentArtwork = artworks.getOrNull(currentIndex)
     val context = LocalContext.current
 
+    Log.d("CARD", "entered card swiper")
+
     val nextArtwork = artworks.getOrNull(currentIndex + 1)
 
     LaunchedEffect(nextArtwork) {
@@ -168,6 +170,9 @@ fun CardSwiper(
         artworks.getOrNull(currentIndex + 3),
         artworks.getOrNull(currentIndex + 4),
         artworks.getOrNull(currentIndex + 5),
+        artworks.getOrNull(currentIndex + 6),
+        artworks.getOrNull(currentIndex + 7),
+        artworks.getOrNull(currentIndex + 8),
         )
 
     artworksToPreload.forEach { artwork ->
