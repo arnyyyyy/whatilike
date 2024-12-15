@@ -13,10 +13,7 @@ import coil.request.ErrorResult
 import coil.request.ImageRequest
 import coil.request.SuccessResult
 import coil.util.DebugLogger
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.GlobalScope.coroutineContext
 import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import okhttp3.OkHttpClient
@@ -38,9 +35,7 @@ class ArtViewModel(context: Context) : ViewModel() {
     var currentIndex = mutableStateOf(0)
 
     private var currentApi = mutableStateOf(MuseumApi.HERMITAGE)
-
-    private val _isLoading = mutableStateOf(true)
-    val isLoading: State<Boolean> = _isLoading
+    var isLoading = mutableStateOf(true)
 
     private val unsafeTrustManager = object : X509TrustManager {
         override fun checkClientTrusted(
@@ -75,18 +70,20 @@ class ArtViewModel(context: Context) : ViewModel() {
     init {
         viewModelScope.launch {
             try {
-                _isLoading.value = true
-                async { loadRandomArtworks(20, true) }
-                async { loadRandomArtworks(20, false) }
+                isLoading.value = true
+                val initLoading = async { loadRandomArtworks(20, false) }
 
-//                loadMet.await()
+                initLoading.await()
+
+                launch {  preloadImage(artworks.value.get(0).primaryImage, context)}
 //                loadHermitage.await()
 
                 Log.d("ArtViewModel", "Artworks loaded successfully.")
             } catch (e: Exception) {
                 Log.e("ArtViewModel", "Failed to load artworks during init", e)
             } finally {
-                _isLoading.value = false
+                isLoading.value = false
+                launch { loadRandomArtworks(20, true) }
             }
         }
     }
@@ -160,7 +157,7 @@ class ArtViewModel(context: Context) : ViewModel() {
             } catch (e: Exception) {
                 Log.e("ArtViewModel", "Failed to load artworks", e)
             } finally {
-                _isLoading.value = false
+//                _isLoading.value = false
             }
         }
 }

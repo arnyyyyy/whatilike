@@ -91,10 +91,6 @@ class MainActivity : ComponentActivity() {
                 val coroutineScope = rememberCoroutineScope()
                 LaunchedEffect(Unit) {
                     coroutineScope.launch {
-                        likedArtViewModel.loadLikedArtworks()
-                    }
-                    delay(10000)
-                    coroutineScope.launch {
                         artViewModel.loadRandomArtworks(100, true)
 //                        artViewModel.loadArtworks(true)
                     }
@@ -102,6 +98,12 @@ class MainActivity : ComponentActivity() {
 //                        artViewModel.loadArtworks(false)
                         artViewModel.loadRandomArtworks(100, false)
 
+                    }
+                    coroutineScope.launch {
+                        likedArtViewModel.loadLikedArtworks()
+                    }
+                    while (artViewModel.isLoading.value) {
+                        delay(100)
                     }
 
                     isLoading = false

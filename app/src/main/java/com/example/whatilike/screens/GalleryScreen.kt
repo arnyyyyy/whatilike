@@ -40,6 +40,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImagePainter
 import coil.compose.rememberAsyncImagePainter
@@ -281,7 +282,9 @@ fun ArtworkCard(
                                 )
                                 onSwiped()
                                 if (offsetX.value > 0) {
-                                    likedViewModel.addLikedArtwork(currentArtwork.value.objectID)
+                                    likedViewModel.viewModelScope.launch {
+                                        likedViewModel.addLikedArtwork(currentArtwork.value.objectID)
+                                    }
                                 }
                                 isFlipped = false
                                 offsetX.snapTo(0f)

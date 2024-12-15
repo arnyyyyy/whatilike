@@ -34,66 +34,62 @@ class LikedArtworksViewModel(
     private val _isLoading = mutableStateOf(true)
     val isLoading: State<Boolean> = _isLoading
 
-    fun loadLikedArtworks() {
+    suspend fun loadLikedArtworks() {
         val user = FirebaseAuth.getInstance().currentUser
         user?.let { firebaseUser ->
-            viewModelScope.launch {
-                _isLoading.value = true
-                try {
-                    val localLikedArtworks = withContext(Dispatchers.IO) {
-                        likedArtworksDao.getUserLikedArtworks(firebaseUser.uid)
-                    }
-
-                    val likedIds = localLikedArtworks?.likedArtworksIds ?: emptyList()
-
-                    if (likedIds.size < 10) {
-                        val remoteIds = fetchLikedArtworkIds(firebaseUser.uid)
-                        saveToLocalDatabase(firebaseUser.uid, remoteIds)
-                        val artworks = fetchArtworksByIds(remoteIds)
-                        likedArtworks.value = artworks
-                    } else {
-                        val artworks = fetchArtworksByIds(likedIds)
-                        likedArtworks.value = artworks
-                    }
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                } finally {
-                    Log.d("LIKED", "loading LIKED succeded")
-                    _isLoading.value = false
+            _isLoading.value = true
+            try {
+                val localLikedArtworks = withContext(Dispatchers.IO) {
+                    likedArtworksDao.getUserLikedArtworks(firebaseUser.uid)
                 }
+
+                val likedIds = localLikedArtworks?.likedArtworksIds ?: emptyList()
+
+                if (likedIds.size < 10) {
+                    val remoteIds = fetchLikedArtworkIds(firebaseUser.uid)
+                    saveToLocalDatabase(firebaseUser.uid, remoteIds)
+                    val artworks = fetchArtworksByIds(remoteIds)
+                    likedArtworks.value = artworks
+                } else {
+                    val artworks = fetchArtworksByIds(likedIds)
+                    likedArtworks.value = artworks
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            } finally {
+                Log.d("LIKED", "loading LIKED succeded")
+                _isLoading.value = false
             }
         }
     }
 
-    fun addLikedArtwork(artworkId: Int) {
+    suspend fun addLikedArtwork(artworkId: Int) {
         val user = FirebaseAuth.getInstance().currentUser
         user?.let { firebaseUser ->
-            viewModelScope.launch {
-                try {
-                    val document = firestore.collection("users")
-                        .document(firebaseUser.uid)
-                        .collection("liked_artworks")
-                        .document(artworkId.toString())
+            try {
+                val document = firestore.collection("users")
+                    .document(firebaseUser.uid)
+                    .collection("liked_artworks")
+                    .document(artworkId.toString())
 
-                    document.set(mapOf("artworkId" to artworkId)).await()
+                document.set(mapOf("artworkId" to artworkId)).await()
 
-                    withContext(Dispatchers.IO) {
-                        val currentData = likedArtworksDao.getUserLikedArtworks(firebaseUser.uid)
-                        val updatedIds =
-                            currentData?.likedArtworksIds?.toMutableList() ?: mutableListOf()
-                        updatedIds.add(artworkId)
-                        likedArtworksDao.saveLikedArtworks(
-                            LikedArtworks(
-                                firebaseUser.uid,
-                                updatedIds
-                            )
+                withContext(Dispatchers.IO) {
+                    val currentData = likedArtworksDao.getUserLikedArtworks(firebaseUser.uid)
+                    val updatedIds =
+                        currentData?.likedArtworksIds?.toMutableList() ?: mutableListOf()
+                    updatedIds.add(artworkId)
+                    likedArtworksDao.saveLikedArtworks(
+                        LikedArtworks(
+                            firebaseUser.uid,
+                            updatedIds
                         )
-                    }
-
-                    loadLikedArtworks()
-                } catch (e: Exception) {
-                    e.printStackTrace()
+                    )
                 }
+
+                loadLikedArtworks()
+            } catch (e: Exception) {
+                e.printStackTrace()
             }
         }
     }
