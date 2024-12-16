@@ -8,6 +8,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import coil.ImageLoader
+import coil.util.DebugLogger
 import com.google.firebase.firestore.FirebaseFirestore
 
 import com.example.whatilike.data.ArtObject
@@ -21,6 +23,10 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
+import okhttp3.OkHttpClient
+import javax.net.ssl.SSLContext
+import javax.net.ssl.TrustManager
+import javax.net.ssl.X509TrustManager
 
 
 class LikedArtworksViewModel(
@@ -30,6 +36,38 @@ class LikedArtworksViewModel(
 ) : ViewModel() {
 
     val likedArtworks = MutableStateFlow<List<ArtObject>>(emptyList())
+    val _context = context
+
+    private val unsafeTrustManager = object : X509TrustManager {
+        override fun checkClientTrusted(
+            chain: Array<java.security.cert.X509Certificate>,
+            authType: String
+        ) {
+        }
+
+        override fun checkServerTrusted(
+            chain: Array<java.security.cert.X509Certificate>,
+            authType: String
+        ) {
+        }
+
+        override fun getAcceptedIssuers(): Array<java.security.cert.X509Certificate> = arrayOf()
+    }
+
+    private val sslContext = SSLContext.getInstance("SSL").apply {
+        init(null, arrayOf<TrustManager>(unsafeTrustManager), java.security.SecureRandom())
+    }
+
+    private val client = OkHttpClient.Builder()
+        .sslSocketFactory(sslContext.socketFactory, unsafeTrustManager)
+        .build()
+
+    val imageLoader = mutableStateOf(
+        ImageLoader.Builder(_context)
+            .okHttpClient(client)
+            .logger(DebugLogger())
+            .build()
+    )
 
     private val _isLoading = mutableStateOf(true)
     val isLoading: State<Boolean> = _isLoading
@@ -61,6 +99,12 @@ class LikedArtworksViewModel(
                 _isLoading.value = false
             }
         }
+    }
+
+    init {
+        viewModelScope.launch {
+               loadLikedArtworks()
+            }
     }
 
     suspend fun addLikedArtwork(artworkId: Int) {

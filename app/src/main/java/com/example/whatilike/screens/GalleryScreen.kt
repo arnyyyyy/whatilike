@@ -162,7 +162,7 @@ fun CardSwiper(
 
     LaunchedEffect(nextArtwork) {
         nextArtwork?.let {
-            viewModel.preloadImage(it.primaryImage, context)
+            viewModel.preloadImage(it.primaryImageSmall, context)
         }
     }
 
@@ -174,12 +174,15 @@ fun CardSwiper(
         artworks.getOrNull(currentIndex + 6),
         artworks.getOrNull(currentIndex + 7),
         artworks.getOrNull(currentIndex + 8),
+        artworks.getOrNull(currentIndex + 9),
+        artworks.getOrNull(currentIndex + 10),
+        artworks.getOrNull(currentIndex + 11),
         )
 
     artworksToPreload.forEach { artwork ->
         artwork?.let {
             LaunchedEffect(it) {
-                viewModel.preloadImage(it.primaryImage, context)
+                viewModel.preloadImage(it.primaryImageSmall, context)
             }
         }
     }
@@ -190,7 +193,7 @@ fun CardSwiper(
 
     nextArtwork?.let { next ->
         val painter = rememberAsyncImagePainter(
-            next.primaryImage, imageLoader = viewModel.imageLoader.value
+            next.primaryImageSmall, imageLoader = viewModel.imageLoader.value
         )
         Image(
             painter = painter,
@@ -207,7 +210,7 @@ fun CardSwiper(
     ) {
         nextArtwork?.let {
             val nextPainter = rememberAsyncImagePainter(
-                model = it.primaryImage,
+                model = it.primaryImageSmall,
                 imageLoader = viewModel.imageLoader.value
 
             )
@@ -354,7 +357,7 @@ fun ArtworkCard(
                 }
             } else {
                 val painter = rememberAsyncImagePainter(
-                    model = artwork.primaryImage,
+                    model = artwork.primaryImageSmall,
                     imageLoader = viewModel.imageLoader.value
 
                 )

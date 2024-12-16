@@ -88,20 +88,8 @@ class MainActivity : ComponentActivity() {
             WhatilikeTheme {
                 var isLoading by remember { mutableStateOf(true) }
 
-                val coroutineScope = rememberCoroutineScope()
                 LaunchedEffect(Unit) {
-                    coroutineScope.launch {
-                        artViewModel.loadRandomArtworks(100, true)
-//                        artViewModel.loadArtworks(true)
-                    }
-                    coroutineScope.launch {
-//                        artViewModel.loadArtworks(false)
-                        artViewModel.loadRandomArtworks(100, false)
-
-                    }
-                    coroutineScope.launch {
-                        likedArtViewModel.loadLikedArtworks()
-                    }
+//                    launch { likedArtViewModel.loadLikedArtworks() }
                     while (artViewModel.isLoading.value) {
                         delay(100)
                     }

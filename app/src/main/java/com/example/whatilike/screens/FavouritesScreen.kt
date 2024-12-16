@@ -101,7 +101,8 @@ fun FavouritesScreen(viewModel: LikedArtworksViewModel, foldersViewModel: Folder
                         items(likedArtworks) { artwork ->
                             LikedArtworkCard(
                                 artwork = artwork,
-                                onDeleteClicked = { viewModel.deleteLikedArtwork(artwork.objectID) }
+                                onDeleteClicked = { viewModel.deleteLikedArtwork(artwork.objectID) },
+                                likedArtworksViewModel = viewModel
                             )
                         }
                     }
@@ -112,7 +113,7 @@ fun FavouritesScreen(viewModel: LikedArtworksViewModel, foldersViewModel: Folder
 }
 
 @Composable
-fun LikedArtworkCard(artwork: ArtObject, onDeleteClicked: () -> Unit) {
+fun LikedArtworkCard(artwork: ArtObject, onDeleteClicked: () -> Unit, likedArtworksViewModel: LikedArtworksViewModel) {
     var offsetX by remember { mutableFloatStateOf(0f) }
     var isSwipedLeft by remember { mutableStateOf(false) }
     var isDeleted by remember { mutableStateOf(false) }
@@ -231,8 +232,14 @@ fun LikedArtworkCard(artwork: ArtObject, onDeleteClicked: () -> Unit) {
                         .align(Alignment.Center)
                         .padding(top = 48.dp)
                 ) {
+                    val painter = rememberAsyncImagePainter(
+                        model = artwork.primaryImage,
+                        imageLoader = likedArtworksViewModel.imageLoader.value
+
+                    )
+
                     Image(
-                        painter = rememberAsyncImagePainter(artwork.primaryImage),
+                        painter = painter,
                         contentDescription = artwork.title,
                         modifier = Modifier
                             .padding(16.dp)
