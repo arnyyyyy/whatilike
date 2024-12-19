@@ -17,18 +17,31 @@ class ArtRepository(
     private val context: Context,
 ) {
     private val metMuseumApi: MetMuseumApiService = MetDatabase.apiService
+    private val harvardMuseumApi: HarvardMuseumApiService = HarvardMuseumApiService()
     private val hermitageMuseumApi: HermitageMuseumApiService = HermitageMuseumApiService()
     private val currentApi = mutableStateOf(MuseumApi.MET)
 
-    suspend fun getRandomArtworks(count: Int = 15, currentApi_: MuseumApi): List<ArtObject> =
-        if (currentApi_ == MuseumApi.MET) {
-            getArtworksFromMetMuseum(count)
-        } else if (currentApi_ == MuseumApi.HERMITAGE) {
-            getArtworksFromHermitageMuseum(count)
-        } else emptyList()
+    suspend fun getRandomArtworks(count: Int = 15, museumApi: MuseumApi): List<ArtObject> {
+        when (museumApi) {
+            MuseumApi.MET -> {
+                return getArtworksFromMetMuseum(count)
+            }
 
+            MuseumApi.HERMITAGE -> {
+                return getArtworksFromHermitageMuseum(count)
+            }
 
-    private suspend fun getArtworksFromMetMuseum(count: Int = 15): List<ArtObject> =
+            MuseumApi.HARVARD -> {
+                return getArtworksFromHarvardMuseum(count)
+            }
+
+            else -> {
+                return emptyList()
+            }
+        }
+    }
+
+    private suspend fun getArtworksFromMetMuseum(count: Int): List<ArtObject> =
         withContext(Dispatchers.IO) {
             val newArtworks =
                 fetchArtworksFromMetMuseum(count)
@@ -47,11 +60,19 @@ class ArtRepository(
             return@withContext newArtworks
         }
 
+    private suspend fun getArtworksFromHarvardMuseum(count: Int): List<ArtObject> =
+        withContext(Dispatchers.IO) {
+            val newArtworks = fetchHarvardArtworks(count)
+
+            Log.d("ArtRepository Harvard", "Returning loaded artworks: ${newArtworks.size}")
+
+            return@withContext newArtworks
+        }
+
 
     fun setCurrentApi(currentApi_: MuseumApi) {
         currentApi.value = currentApi_
         Log.d("Repo", "moved to ${currentApi.value.name}")
-
     }
 
     private suspend fun fetchArtworksFromMetMuseum(count: Int): List<ArtObject> =
@@ -99,15 +120,37 @@ class ArtRepository(
             return@withContext artworks
         }
 
+    private suspend fun fetchHarvardArtworks(count: Int): List<ArtObject> =
+        withContext(Dispatchers.IO) {
+            val ids = List(count) { Random.nextInt(0, 900000 + 1) }
+            Log.d("ArtRepository Harvard", "Total Object IDs fetched: ${ids.size}")
+
+            val randomIds = ids.shuffled().take(count)
+
+            val deferredArtworks = randomIds.map { id ->
+                async {
+                    val artResponse = harvardMuseumApi.getObjectByID(id)
+                    if (artResponse != null && !artResponse.primaryImage.isNullOrEmpty()) artResponse else null
+                }
+            }
+
+            val artworks = deferredArtworks.awaitAll().filterNotNull()
+            Log.d("ArtRepository Harvard", "Artworks retrieved from API: ${artworks.size}")
+            return@withContext artworks
+        }
+
 
     suspend fun getArtworksByIds(ids: List<Int>): List<ArtObject> = withContext(
         Dispatchers.IO
     ) {
-        val (hermitageIds, metIds) = ids.partition { it > 1000000 }
+        val (metAndHermitageIds, harvardIds) = ids.partition { it < 2000000 }
+        val (metIds, hermitageIds) = metAndHermitageIds.partition { it < 2000000 }
+
         val hermitageArtworks = getArtworksByIdsHermitageMuseum(hermitageIds)
         val metArtworks = getArtworksByIdsMetMuseum(metIds)
+        val harvardArtworks = getArtworksByIdsHarvardMuseum(harvardIds)
 
-        return@withContext hermitageArtworks + metArtworks
+        return@withContext hermitageArtworks + metArtworks + harvardArtworks
 
     }
 
@@ -126,7 +169,17 @@ class ArtRepository(
     ) {
         ids.map { id ->
             async {
-                hermitageMuseumApi.getObjectByID(id - MUSEUM_SHIFT)
+                hermitageMuseumApi.getObjectByID(id - HERMITAGE_MUSEUM_SHIFT)
+            }
+        }.awaitAll().filterNotNull()
+    }
+
+    suspend fun getArtworksByIdsHarvardMuseum(ids: List<Int>): List<ArtObject> = withContext(
+        Dispatchers.IO
+    ) {
+        ids.map { id ->
+            async {
+                harvardMuseumApi.getObjectByID(id - HARVARD_MUSEUM_SHIFT)
             }
         }.awaitAll().filterNotNull()
     }

@@ -1,6 +1,5 @@
 package com.example.whatilike.data
 
-import android.util.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jsoup.Jsoup
@@ -32,7 +31,7 @@ object SSLHelper {
     }
 }
 
-const val MUSEUM_SHIFT = 1000000
+const val HERMITAGE_MUSEUM_SHIFT = 1000000
 
 class HermitageMuseumApiService {
     suspend fun getObjectByID(objectId: Int): ArtObject? {
@@ -61,7 +60,7 @@ class HermitageMuseumApiService {
                 }
 
                 ArtObject(
-                    objectID = objectId + MUSEUM_SHIFT,
+                    objectID = objectId + HERMITAGE_MUSEUM_SHIFT,
                     primaryImage = imageUrl,
                     primaryImageSmall = imageUrl,
                     title = title,

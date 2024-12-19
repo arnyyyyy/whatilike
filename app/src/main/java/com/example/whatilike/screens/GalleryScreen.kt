@@ -76,6 +76,29 @@ fun GalleryScreen(
 
             Button(
                 onClick = {
+                    artViewModel.setCurrentApi(MuseumApi.HARVARD)
+                    Log.d("Gallery", "moved to Harvard")
+                }, colors = ButtonColors(
+                    containerColor = Color.Transparent,
+                    contentColor = Brown,
+                    disabledContainerColor = Color.Transparent,
+                    disabledContentColor = Color.White
+                )
+            ) {
+                Image(
+                    painter = painterResource(id = R.drawable.harvard_logo),
+                    contentDescription = null,
+                    modifier = Modifier
+                        .padding(3.dp)
+                        .height(20.dp)
+                        .width(20.dp),
+                    contentScale = ContentScale.Crop
+                )
+
+            }
+
+            Button(
+                onClick = {
                     artViewModel.setCurrentApi(MuseumApi.MET)
                     Log.d("Gallery", "moved to Met")
                 }, colors = ButtonColors(

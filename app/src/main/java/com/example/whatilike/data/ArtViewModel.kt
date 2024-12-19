@@ -31,10 +31,14 @@ class ArtViewModel(context: Context) : ViewModel() {
 
     private val _metArtworks = MutableStateFlow<List<ArtObject>>(emptyList())
     private val _hermitageArtworks = MutableStateFlow<List<ArtObject>>(emptyList())
+    private val _harvardArtworks = MutableStateFlow<List<ArtObject>>(emptyList())
+
     var artworks: MutableStateFlow<List<ArtObject>> = _hermitageArtworks
 
     private var currentMetIndex = mutableStateOf(0)
     private var currentHermitageIndex = mutableStateOf(0)
+    private var currentHarvardIndex = mutableStateOf(0)
+
     var currentIndex = mutableStateOf(0)
 
     private var currentApi = mutableStateOf(MuseumApi.HERMITAGE)
@@ -76,12 +80,9 @@ class ArtViewModel(context: Context) : ViewModel() {
         viewModelScope.launch {
             try {
                 isLoading.value = true
-                val initLoading = async { loadRandomArtworks(20, false) }
-
+                val initLoading = async { loadRandomArtworks(80, MuseumApi.HERMITAGE) }
                 initLoading.await()
 
-//                val loadImage = async {  preloadImage(artworks.value.get(0).primaryImage, context)}
-//                loadImage.await()
 
                 val artworksToPreload = listOf(
                     artworks.value.get(0),
@@ -100,11 +101,6 @@ class ArtViewModel(context: Context) : ViewModel() {
                     artworks.value.get(13),
                 )
 
-//                artworksToPreload.forEach { artwork ->
-//                    val loadImage = async { preloadImage(artwork.primaryImage, context) }
-//                    loadImage.await()
-//                }
-
                 val loadImages = artworksToPreload.map { artwork ->
                     async { preloadImage(artwork.primaryImageSmall, context) }
                 }
@@ -118,27 +114,12 @@ class ArtViewModel(context: Context) : ViewModel() {
             } finally {
                 isLoading.value = false
 
-//                launch {
-                launch { loadRandomArtworks(20, true) }
-//                    val loader = async { loadRandomArtworks(20, true) }
-                launch { loadRandomArtworks(100, true) }
-                launch { loadRandomArtworks(100, false) }
-//                    loader.await()
-//                    val artworksToPreload = listOf(
-//                        _metArtworks.value.get(0),
-//                        _metArtworks.value.get(1),
-//                        _metArtworks.value.get(2),
-//                        _metArtworks.value.get(3),
-//                        _metArtworks.value.get(4),
-//                        _metArtworks.value.get(5),
-//                        _metArtworks.value.get(6),
-//                    )
-//
-//                    artworksToPreload.map { artwork ->
-//                        launch { preloadImage(artwork.primaryImageSmall, context) }
-//                    }
+                launch { loadRandomArtworks(80, MuseumApi.MET) }
+                launch { loadRandomArtworks(80, MuseumApi.HARVARD) }
+                launch { loadRandomArtworks(400, MuseumApi.HERMITAGE) }
+                launch { loadRandomArtworks(400, MuseumApi.MET) }
+                launch { loadRandomArtworks(400, MuseumApi.HARVARD) }
             }
-//            }
         }
     }
 
@@ -152,34 +133,34 @@ class ArtViewModel(context: Context) : ViewModel() {
                 currentMetIndex.value = currentIndex.value
             }
 
-            else -> {
+            MuseumApi.HERMITAGE -> {
                 currentHermitageIndex.value = currentIndex.value
             }
+
+            MuseumApi.HARVARD -> {
+                currentHarvardIndex.value = currentIndex.value
+            }
+
+            else -> {}
         }
 
         when (newApi) {
             MuseumApi.MET -> {
                 artworks = _metArtworks
                 currentIndex.value = currentMetIndex.value
-//                imageLoader.value =
-////                    Coil.imageLoader(_context).newBuilder().logger(DebugLogger()).build()
-//
-//                    ImageLoader.Builder(_context)
-//                        .okHttpClient(client)
-//                        .logger(DebugLogger())
-//                        .build()
-//                    Coil.imageLoader(_context).newBuilder().logger(DebugLogger()).build()
-
             }
 
-            else -> {
+            MuseumApi.HERMITAGE -> {
                 artworks = _hermitageArtworks
                 currentIndex.value = currentHermitageIndex.value
-//                imageLoader.value = ImageLoader.Builder(_context)
-//                    .okHttpClient(client)
-//                    .logger(DebugLogger())
-//                    .build()
             }
+
+            MuseumApi.HARVARD -> {
+                artworks = _harvardArtworks
+                currentIndex.value = currentHarvardIndex.value
+            }
+
+            else -> {}
         }
         currentApi.value = newApi
     }
@@ -204,23 +185,31 @@ class ArtViewModel(context: Context) : ViewModel() {
         }
     }
 
-    suspend fun loadRandomArtworks(count: Int, isMainApi: Boolean) {
+    suspend fun loadRandomArtworks(count: Int, museumApi: MuseumApi) {
         val result = MutableStateFlow<List<ArtObject>>(emptyList())
         try {
-            val currentApi = if (isMainApi) MuseumApi.MET else MuseumApi.HERMITAGE
-            result.value = repository.getRandomArtworks(count * 4, currentApi)
 
-            if (isMainApi) {
-                _metArtworks.value += result.value
-            } else {
-                _hermitageArtworks.value += result.value
+
+            result.value = repository.getRandomArtworks(count, museumApi)
+
+            when (museumApi) {
+                MuseumApi.MET -> {
+                    _metArtworks.value += result.value
+                }
+                MuseumApi.HERMITAGE -> {
+                    _hermitageArtworks.value += result.value
+                }
+                MuseumApi.HARVARD -> {
+                    _harvardArtworks.value += result.value
+                }
+
+                else -> {}
             }
+
             Log.d("ArtViewModel", "Total artworks loaded: ${artworks.value.size}")
         } catch (e: Exception) {
             Log.e("ArtViewModel", "Failed to load artworks", e)
         } finally {
-//                _isLoading.value = false
-
             viewModelScope.launch {
                 val artworksToPreload = listOf(
                     result.value.get(0),
