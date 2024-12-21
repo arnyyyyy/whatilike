@@ -79,7 +79,7 @@ class ArtRepository(
         withContext(Dispatchers.IO) {
             val response = metMuseumApi.getObjectByID(1)
             if (response.isSuccessful && response.body() != null) {
-                val ids = List(count) { Random.nextInt(0, 400000 + 1) }
+                val ids = List(count) { Random.nextInt(0, 900000) }
                 Log.d("ArtRepository MET", "Total Object IDs fetched: ${ids.size}")
 
                 val randomIds = ids.shuffled().take(count)
@@ -103,7 +103,7 @@ class ArtRepository(
 
     private suspend fun fetchHermitageArtworks(count: Int): List<ArtObject> =
         withContext(Dispatchers.IO) {
-            val ids = List(count) { Random.nextInt(0, 900000 + 1) }
+            val ids = List(count) { Random.nextInt(0, 1000000) }
             Log.d("ArtRepository Hermitage", "Total Object IDs fetched: ${ids.size}")
 
             val randomIds = ids.shuffled().take(count)
@@ -122,7 +122,7 @@ class ArtRepository(
 
     private suspend fun fetchHarvardArtworks(count: Int): List<ArtObject> =
         withContext(Dispatchers.IO) {
-            val ids = List(count) { Random.nextInt(0, 900000 + 1) }
+            val ids = List(count) { Random.nextInt(0, 900000 ) }
             Log.d("ArtRepository Harvard", "Total Object IDs fetched: ${ids.size}")
 
             val randomIds = ids.shuffled().take(count)
@@ -144,7 +144,7 @@ class ArtRepository(
         Dispatchers.IO
     ) {
         val (metAndHermitageIds, harvardIds) = ids.partition { it < 2000000 }
-        val (metIds, hermitageIds) = metAndHermitageIds.partition { it < 2000000 }
+        val (metIds, hermitageIds) = metAndHermitageIds.partition { it < 1000000 }
 
         val hermitageArtworks = getArtworksByIdsHermitageMuseum(hermitageIds)
         val metArtworks = getArtworksByIdsMetMuseum(metIds)

@@ -83,30 +83,29 @@ class ArtViewModel(context: Context) : ViewModel() {
                 val initLoading = async { loadRandomArtworks(80, MuseumApi.HERMITAGE) }
                 initLoading.await()
 
+                if(artworks.value.isNotEmpty()) {
+                    val artworksToPreload = listOf(
+                        artworks.value.get(0),
+                        artworks.value.get(1),
+                        artworks.value.get(2),
+                        artworks.value.get(3),
+                        artworks.value.get(4),
+                        artworks.value.get(5),
+                        artworks.value.get(6),
+                        artworks.value.get(7),
+                        artworks.value.get(8),
+                        artworks.value.get(9),
+                        artworks.value.get(10),
+                        artworks.value.get(11),
+                        artworks.value.get(12),
+                        artworks.value.get(13),
+                    )
 
-                val artworksToPreload = listOf(
-                    artworks.value.get(0),
-                    artworks.value.get(1),
-                    artworks.value.get(2),
-                    artworks.value.get(3),
-                    artworks.value.get(4),
-                    artworks.value.get(5),
-                    artworks.value.get(6),
-                    artworks.value.get(7),
-                    artworks.value.get(8),
-                    artworks.value.get(9),
-                    artworks.value.get(10),
-                    artworks.value.get(11),
-                    artworks.value.get(12),
-                    artworks.value.get(13),
-                )
-
-                val loadImages = artworksToPreload.map { artwork ->
-                    async { preloadImage(artwork.primaryImageSmall, context) }
+                    val loadImages = artworksToPreload.map { artwork ->
+                        async { preloadImage(artwork.primaryImageSmall, context) }
+                    }
+                    loadImages.awaitAll()
                 }
-
-                loadImages.awaitAll()
-
 
                 Log.d("ArtViewModel", "Artworks loaded successfully.")
             } catch (e: Exception) {
@@ -211,18 +210,20 @@ class ArtViewModel(context: Context) : ViewModel() {
             Log.e("ArtViewModel", "Failed to load artworks", e)
         } finally {
             viewModelScope.launch {
-                val artworksToPreload = listOf(
-                    result.value.get(0),
-                    result.value.get(1),
-                    result.value.get(2),
-                    result.value.get(3),
-                    result.value.get(4),
-                    result.value.get(5),
-                    result.value.get(6),
-                )
+                if (result.value.isNotEmpty()) {
+                    val artworksToPreload = listOf(
+                        result.value.get(0),
+                        result.value.get(1),
+                        result.value.get(2),
+                        result.value.get(3),
+                        result.value.get(4),
+                        result.value.get(5),
+                        result.value.get(6),
+                    )
 
-                artworksToPreload.map { artwork ->
-                    launch { preloadImage(artwork.primaryImageSmall, _context) }
+                    artworksToPreload.map { artwork ->
+                        launch { preloadImage(artwork.primaryImageSmall, _context) }
+                    }
                 }
             }
         }

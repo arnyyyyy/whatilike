@@ -189,23 +189,26 @@ fun CardSwiper(
         }
     }
 
-    val artworksToPreload = listOf(
-        artworks.getOrNull(currentIndex + 2),
-        artworks.getOrNull(currentIndex + 3),
-        artworks.getOrNull(currentIndex + 4),
-        artworks.getOrNull(currentIndex + 5),
-        artworks.getOrNull(currentIndex + 6),
-        artworks.getOrNull(currentIndex + 7),
-        artworks.getOrNull(currentIndex + 8),
-        artworks.getOrNull(currentIndex + 9),
-        artworks.getOrNull(currentIndex + 10),
-        artworks.getOrNull(currentIndex + 11),
+
+    if (artworks.isNotEmpty()) {
+        val artworksToPreload = listOf(
+            artworks.getOrNull(currentIndex + 2),
+            artworks.getOrNull(currentIndex + 3),
+            artworks.getOrNull(currentIndex + 4),
+            artworks.getOrNull(currentIndex + 5),
+            artworks.getOrNull(currentIndex + 6),
+            artworks.getOrNull(currentIndex + 7),
+            artworks.getOrNull(currentIndex + 8),
+            artworks.getOrNull(currentIndex + 9),
+            artworks.getOrNull(currentIndex + 10),
+            artworks.getOrNull(currentIndex + 11),
         )
 
-    artworksToPreload.forEach { artwork ->
-        artwork?.let {
-            LaunchedEffect(it) {
-                viewModel.preloadImage(it.primaryImageSmall, context)
+        artworksToPreload.forEach { artwork ->
+            artwork?.let {
+                LaunchedEffect(it) {
+                    viewModel.preloadImage(it.primaryImageSmall, context)
+                }
             }
         }
     }

@@ -25,6 +25,8 @@ fun SplashScreen(
         Box(modifier = Modifier.fillMaxSize()) {
             Image(
                 painter = painterResource(id = R.drawable.dali),
+
+//                painter = painterResource(id = R.drawable.the_annunciation),
                 contentDescription = null,
                 modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.Crop

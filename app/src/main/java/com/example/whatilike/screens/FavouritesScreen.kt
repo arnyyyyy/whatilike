@@ -173,7 +173,7 @@ fun LikedArtworkCard(artwork: ArtObject, onDeleteClicked: () -> Unit, likedArtwo
                     Image(
                         painter = rememberAsyncImagePainter(
                             model = artwork.primaryImage,
-                            imageLoader = Coil.imageLoader(context)
+                            imageLoader = likedArtworksViewModel.imageLoader.value
                         ),
                         contentDescription = artwork.title,
                         modifier = Modifier
