@@ -1,6 +1,5 @@
 package com.example.whatilike.screens
 
-import android.util.Log
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
@@ -18,7 +17,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.sharp.Add
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.Card
@@ -35,7 +33,6 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
@@ -43,16 +40,13 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
-import coil.Coil
 import coil.compose.rememberAsyncImagePainter
 import com.example.whatilike.R
 import com.example.whatilike.cached.user.FolderViewModel
 import com.example.whatilike.cached.user.LikedArtworksViewModel
 import com.example.whatilike.data.ArtObject
-import com.example.whatilike.data.MuseumApi
 import com.example.whatilike.data.downloadArtwork
 import com.example.whatilike.ui.components.PaperBackground
-import com.example.whatilike.ui.theme.Brown
 import com.example.whatilike.ui.theme.DarkBeige
 import com.example.whatilike.ui.theme.UltraLightGrey
 import kotlin.math.roundToInt
@@ -291,7 +285,7 @@ fun LikedArtworkCard(
 
                     Button(
                         onClick = {
-                            downloadArtwork(context, artwork.primaryImage!!)
+                            downloadArtwork(context, artwork.primaryImage!!, artwork.title)
                         },
                         colors = ButtonColors(
                             contentColor = Color.Black.copy(alpha = 0.6f),

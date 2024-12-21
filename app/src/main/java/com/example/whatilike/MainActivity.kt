@@ -33,10 +33,7 @@ import com.example.whatilike.screens.SplashScreen
 import com.google.firebase.appcheck.FirebaseAppCheck
 import com.google.firebase.appcheck.playintegrity.PlayIntegrityAppCheckProviderFactory
 import com.google.firebase.firestore.FirebaseFirestore
-import kotlinx.coroutines.async
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     private lateinit var auth: FirebaseAuth
@@ -66,9 +63,8 @@ class MainActivity : ComponentActivity() {
         val models = initializeViewModels()
         val userProfileViewModel: UserProfileViewModel =
             models["userProfile"] as UserProfileViewModel
-        val artViewModel: ArtViewModel = models["art"] as ArtViewModel
-
         val likedArtViewModel: LikedArtworksViewModel = models["liked"] as LikedArtworksViewModel
+        val artViewModel: ArtViewModel = models["art"] as ArtViewModel
         val foldersViewModel: FolderViewModel = models["folders"] as FolderViewModel
 
 
