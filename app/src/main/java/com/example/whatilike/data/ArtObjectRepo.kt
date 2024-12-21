@@ -10,7 +10,7 @@ import kotlinx.coroutines.withContext
 import kotlin.random.Random
 
 enum class MuseumApi {
-    MET, HERMITAGE, HARVARD, MUSEUM
+    MET, HERMITAGE, HARVARD, MIX
 }
 
 class ArtRepository(

@@ -1,5 +1,6 @@
 package com.example.whatilike.screens
 
+import android.util.Log
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
@@ -18,6 +19,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.sharp.Add
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -32,7 +35,9 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -40,11 +45,14 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import coil.Coil
 import coil.compose.rememberAsyncImagePainter
+import com.example.whatilike.R
 import com.example.whatilike.cached.user.FolderViewModel
 import com.example.whatilike.cached.user.LikedArtworksViewModel
 import com.example.whatilike.data.ArtObject
+import com.example.whatilike.data.MuseumApi
 import com.example.whatilike.data.downloadArtwork
 import com.example.whatilike.ui.components.PaperBackground
+import com.example.whatilike.ui.theme.Brown
 import com.example.whatilike.ui.theme.DarkBeige
 import com.example.whatilike.ui.theme.UltraLightGrey
 import kotlin.math.roundToInt
@@ -113,7 +121,11 @@ fun FavouritesScreen(viewModel: LikedArtworksViewModel, foldersViewModel: Folder
 }
 
 @Composable
-fun LikedArtworkCard(artwork: ArtObject, onDeleteClicked: () -> Unit, likedArtworksViewModel: LikedArtworksViewModel) {
+fun LikedArtworkCard(
+    artwork: ArtObject,
+    onDeleteClicked: () -> Unit,
+    likedArtworksViewModel: LikedArtworksViewModel
+) {
     var offsetX by remember { mutableFloatStateOf(0f) }
     var isSwipedLeft by remember { mutableStateOf(false) }
     var isDeleted by remember { mutableStateOf(false) }
@@ -277,18 +289,43 @@ fun LikedArtworkCard(artwork: ArtObject, onDeleteClicked: () -> Unit, likedArtwo
                     }
                     Spacer(modifier = Modifier.width(16.dp))
 
-                    IconButton(
+                    Button(
                         onClick = {
                             downloadArtwork(context, artwork.primaryImage!!)
                         },
+                        colors = ButtonColors(
+                            contentColor = Color.Black.copy(alpha = 0.6f),
+                            containerColor = Color.Black.copy(alpha = 0.6f),
+                            disabledContentColor = Color.Black.copy(alpha = 0.6f),
+                            disabledContainerColor = Color.Black.copy(alpha = 0.6f)
+                        ),
+                        shape = CircleShape,
                         modifier = Modifier.background(Color.Black.copy(alpha = 0.6f), CircleShape)
+
                     ) {
-                        Icon(
-                            imageVector = Icons.Sharp.Add,
+                        Image(
+                            painter = painterResource(id = R.drawable.download),
                             contentDescription = "Download",
-                            tint = Color.White
+                            modifier = Modifier
+                                .height(25.dp)
+                                .width(25.dp)
+//                                .background(Color.Black.copy(alpha = 0.6f), CircleShape),
+//                                    contentScale = ContentScale . Crop
                         )
                     }
+
+//                    IconButton(
+//                        onClick = {
+//                            downloadArtwork(context, artwork.primaryImage!!)
+//                        },
+//                        modifier = Modifier.background(Color.Black.copy(alpha = 0.6f), CircleShape)
+//                    ) {
+//                        Icon(
+//                            imageVector = Icons.Sharp.Add,
+//                            contentDescription = "Download",
+//                            tint = Color.White
+//                        )
+//                    }
                 }
             }
         }

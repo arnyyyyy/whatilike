@@ -31,14 +31,17 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.Icons
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -141,6 +144,29 @@ fun GalleryScreen(
                         .width(20.dp),
                     contentScale = ContentScale.Crop
                 )
+            }
+            if (artViewModel.isMixReady.value) {
+                Button(
+                    onClick = {
+                        artViewModel.setCurrentApi(MuseumApi.MIX)
+                        Log.d("Gallery", "moved to MIX")
+                    }, colors = ButtonColors(
+                        containerColor = Color.Transparent,
+                        contentColor = Brown,
+                        disabledContainerColor = Color.Transparent,
+                        disabledContentColor = Color.White
+                    )
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.museum),
+                        contentDescription = null,
+                        modifier = Modifier
+                            .padding(3.dp)
+                            .height(20.dp)
+                            .width(20.dp),
+                        contentScale = ContentScale.Crop
+                    )
+                }
             }
         }
         Box(modifier = Modifier.fillMaxSize()) {

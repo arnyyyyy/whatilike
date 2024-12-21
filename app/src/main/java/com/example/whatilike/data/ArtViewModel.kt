@@ -2,13 +2,10 @@ package com.example.whatilike.data
 
 import android.content.Context
 import android.util.Log
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import coil.Coil
 import coil.ImageLoader
 import coil.request.ErrorResult
 import coil.request.ImageRequest
@@ -18,7 +15,6 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
 import javax.net.ssl.SSLContext
 import javax.net.ssl.TrustManager
@@ -32,12 +28,17 @@ class ArtViewModel(context: Context) : ViewModel() {
     private val _metArtworks = MutableStateFlow<List<ArtObject>>(emptyList())
     private val _hermitageArtworks = MutableStateFlow<List<ArtObject>>(emptyList())
     private val _harvardArtworks = MutableStateFlow<List<ArtObject>>(emptyList())
+    private val _mixedArtworks = MutableStateFlow<List<ArtObject>>(emptyList())
+
 
     var artworks: MutableStateFlow<List<ArtObject>> = _hermitageArtworks
 
     private var currentMetIndex = mutableStateOf(0)
     private var currentHermitageIndex = mutableStateOf(0)
     private var currentHarvardIndex = mutableStateOf(0)
+    private var currentMixIndex = mutableStateOf(0)
+    var isMixReady = mutableStateOf(false)
+
 
     var currentIndex = mutableStateOf(0)
 
@@ -74,7 +75,6 @@ class ArtViewModel(context: Context) : ViewModel() {
             .logger(DebugLogger())
             .build()
     )
-//        mutableStateOf(Coil.imageLoader(context).newBuilder().logger(DebugLogger()).build())
 
     init {
         viewModelScope.launch {
@@ -83,7 +83,7 @@ class ArtViewModel(context: Context) : ViewModel() {
                 val initLoading = async { loadRandomArtworks(80, MuseumApi.HERMITAGE) }
                 initLoading.await()
 
-                if(artworks.value.isNotEmpty()) {
+                if (artworks.value.isNotEmpty()) {
                     val artworksToPreload = listOf(
                         artworks.value.get(0),
                         artworks.value.get(1),
@@ -140,7 +140,9 @@ class ArtViewModel(context: Context) : ViewModel() {
                 currentHarvardIndex.value = currentIndex.value
             }
 
-            else -> {}
+            MuseumApi.MIX -> {
+                currentMixIndex.value = currentIndex.value
+            }
         }
 
         when (newApi) {
@@ -159,7 +161,10 @@ class ArtViewModel(context: Context) : ViewModel() {
                 currentIndex.value = currentHarvardIndex.value
             }
 
-            else -> {}
+            MuseumApi.MIX -> {
+                artworks = _mixedArtworks
+                currentIndex.value = currentMixIndex.value
+            }
         }
         currentApi.value = newApi
     }
@@ -194,10 +199,15 @@ class ArtViewModel(context: Context) : ViewModel() {
             when (museumApi) {
                 MuseumApi.MET -> {
                     _metArtworks.value += result.value
+                    _mixedArtworks.value =
+                        (_metArtworks.value + _harvardArtworks.value + _hermitageArtworks.value).shuffled()
+                    isMixReady.value = true
                 }
+
                 MuseumApi.HERMITAGE -> {
                     _hermitageArtworks.value += result.value
                 }
+
                 MuseumApi.HARVARD -> {
                     _harvardArtworks.value += result.value
                 }
