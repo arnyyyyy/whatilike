@@ -53,7 +53,7 @@ class HermitageMuseumApiService {
 
                 val title = document.select("meta[property=og:title]").attr("content")
                 val description = document.select("meta[property=og:description]").attr("content")
-                val objectURL = document.select("meta[property=og:url]").attr("content")
+                val objectURL = url
 
                 if (title.contains("Государственный Эрмитаж", ignoreCase = true) && description.contains("Смотрите музейные коллекции онлайн", ignoreCase = true)) {
                     return@withContext null
