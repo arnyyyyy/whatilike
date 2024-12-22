@@ -52,6 +52,7 @@ import com.example.whatilike.data.downloadArtwork
 import com.example.whatilike.ui.components.PaperBackground
 import com.example.whatilike.ui.theme.DarkBeige
 import com.example.whatilike.ui.theme.UltraLightGrey
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.math.absoluteValue
 import kotlin.math.roundToInt
@@ -211,6 +212,9 @@ fun LikedArtworkCard(
                         )
 
                         if (isSwipedLeft && !isDeleted) {
+                            LaunchedEffect(Unit) {
+                                delay(100)
+                            }
                             println("AA")
                             IconButton(
                                 onClick = {
