@@ -411,16 +411,6 @@ fun ArtworkCard(
                                 color = Color.Gray
                             )
                         }
-//                        if (!currentArtwork.value.period.isNullOrEmpty() || !currentArtwork.value.objectDate.isNullOrEmpty()) {
-//                            Spacer(modifier = Modifier.height(8.dp))
-//                            Text(
-//                                text = if (!currentArtwork.value.period.isNullOrEmpty()) currentArtwork.value.period!! else
-//                                    currentArtwork.value.objectDate!!,
-//                                fontSize = 20.sp,
-//                                fontWeight = FontWeight.Bold,
-//                                color = Color.Gray
-//                            )
-//                        }
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
                             text = buildAnnotatedString {
@@ -428,7 +418,6 @@ fun ArtworkCard(
                                     append("Go to Museum Source")
                                 }
                             },
-//                            text = "i - Museum Source",
                             fontSize = 16.sp,
                             color = Color.Gray,
                             modifier = Modifier.clickable {

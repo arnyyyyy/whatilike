@@ -1,5 +1,6 @@
 package com.example.whatilike.screens
 
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
@@ -7,6 +8,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.*
@@ -40,6 +42,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import androidx.lifecycle.viewModelScope
 import coil.compose.rememberAsyncImagePainter
 import com.example.whatilike.R
 import com.example.whatilike.cached.user.FolderViewModel
@@ -49,6 +52,8 @@ import com.example.whatilike.data.downloadArtwork
 import com.example.whatilike.ui.components.PaperBackground
 import com.example.whatilike.ui.theme.DarkBeige
 import com.example.whatilike.ui.theme.UltraLightGrey
+import kotlinx.coroutines.launch
+import kotlin.math.absoluteValue
 import kotlin.math.roundToInt
 
 @Composable
@@ -120,16 +125,20 @@ fun LikedArtworkCard(
     onDeleteClicked: () -> Unit,
     likedArtworksViewModel: LikedArtworksViewModel
 ) {
-    var offsetX by remember { mutableFloatStateOf(0f) }
+//    var offsetX by remember { mutableFloatStateOf(0f) }
     var isSwipedLeft by remember { mutableStateOf(false) }
     var isDeleted by remember { mutableStateOf(false) }
     var showDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
 
-    val animatedOffsetX by animateFloatAsState(
-        targetValue = if (isDeleted) -500f else offsetX,
-        animationSpec = tween(durationMillis = 300), label = ""
-    )
+//    val animatedOffsetX by animateFloatAsState(
+//        targetValue = if (isDeleted) -500f else offsetX,
+//        animationSpec = tween(durationMillis = 300), label = ""
+//    )
+
+    val offsetX = remember { Animatable(0f) }
+
+    val coroutineScope = rememberCoroutineScope()
 
     Box(modifier = Modifier
         .fillMaxWidth()
@@ -140,21 +149,31 @@ fun LikedArtworkCard(
             shape = RoundedCornerShape(4.dp)
         )
         .pointerInput(Unit) {
-            detectHorizontalDragGestures { _, dragAmount ->
-                if (dragAmount < 0) {
-                    offsetX += dragAmount
-                    isSwipedLeft = if (offsetX < -150f) {
-                        true
+            detectHorizontalDragGestures(
+                onDragEnd = {
+                    val threshold = 100f
+                    if (offsetX.value < -threshold) {
+                        coroutineScope.launch {
+                            isSwipedLeft = true
+                            offsetX.animateTo(
+                                targetValue = if (offsetX.value > 0) 0f else -200f,
+                                animationSpec = tween(durationMillis = 200)
+                            )
+                        }
                     } else {
-                        false
+                        coroutineScope.launch {
+                            isSwipedLeft = false
+                            offsetX.animateTo(
+                                targetValue = 0f,
+                                animationSpec = tween(durationMillis = 200)
+                            )
+                        }
                     }
-                } else if (dragAmount > 0) {
-                    if (offsetX > 0) {
-                        offsetX = 0f
-                        isSwipedLeft = false
-                    } else {
-                        offsetX += dragAmount
-                    }
+                }
+            ) { change, dragAmount ->
+                change.consume()
+                coroutineScope.launch {
+                    offsetX.snapTo(offsetX.value + dragAmount)
                 }
             }
         }
@@ -163,7 +182,6 @@ fun LikedArtworkCard(
             Card(
                 colors = CardDefaults.cardColors(Color.Transparent),
                 modifier = Modifier
-                    .offset { IntOffset(animatedOffsetX.roundToInt(), 0) }
                     .fillMaxWidth()
                     .padding(8.dp)
                     .clickable { showDialog = true }
@@ -176,40 +194,47 @@ fun LikedArtworkCard(
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
 
-                    Image(
-                        painter = rememberAsyncImagePainter(
-                            model = artwork.primaryImage,
-                            imageLoader = likedArtworksViewModel.imageLoader.value
-                        ),
-                        contentDescription = artwork.title,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(200.dp)
-                    )
+                    Row(
+                        horizontalArrangement = Arrangement.SpaceEvenly,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Image(
+                            painter = rememberAsyncImagePainter(
+                                model = artwork.primaryImage,
+                                imageLoader = likedArtworksViewModel.imageLoader.value
+                            ),
+                            contentDescription = artwork.title,
+                            modifier = Modifier
+                                .height(200.dp)
+                                .offset { IntOffset((offsetX.value / 2).roundToInt(), 0) }
+                                .background(Color.Black)
+                        )
+
+                        if (isSwipedLeft && !isDeleted) {
+                            println("AA")
+                            IconButton(
+                                onClick = {
+                                    onDeleteClicked()
+                                    isDeleted = true
+                                    println("Artwork ${artwork.objectID} deleted!")
+                                },
+                                modifier = Modifier
+                                    .background(Color.Gray)
+                                    .padding(16.dp)
+                                    .clip(RoundedCornerShape(16))
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Filled.Delete,
+                                    contentDescription = "Delete",
+                                    tint = Color.White
+                                )
+                            }
+                        }
+                    }
                 }
             }
         }
 
-        if (isSwipedLeft && !isDeleted) {
-            IconButton(
-                onClick = {
-                    onDeleteClicked()
-                    isDeleted = true
-                    println("Artwork ${artwork.objectID} deleted!")
-                },
-                modifier = Modifier
-                    .align(Alignment.CenterEnd)
-                    .background(Color.Gray)
-                    .padding(16.dp)
-                    .clip(RoundedCornerShape(16))
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.Delete,
-                    contentDescription = "Delete",
-                    tint = Color.White
-                )
-            }
-        }
     }
 
     if (showDialog) {
@@ -303,23 +328,10 @@ fun LikedArtworkCard(
                             modifier = Modifier
                                 .height(25.dp)
                                 .width(25.dp)
-//                                .background(Color.Black.copy(alpha = 0.6f), CircleShape),
-//                                    contentScale = ContentScale . Crop
+
                         )
                     }
 
-//                    IconButton(
-//                        onClick = {
-//                            downloadArtwork(context, artwork.primaryImage!!)
-//                        },
-//                        modifier = Modifier.background(Color.Black.copy(alpha = 0.6f), CircleShape)
-//                    ) {
-//                        Icon(
-//                            imageVector = Icons.Sharp.Add,
-//                            contentDescription = "Download",
-//                            tint = Color.White
-//                        )
-//                    }
                 }
             }
         }
