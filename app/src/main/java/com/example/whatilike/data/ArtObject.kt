@@ -5,7 +5,7 @@ data class ArtObject(
     val primaryImage: String? = null,
     val primaryImageSmall: String? = null,
     val title: String = "",
-    val artistDisplayName: String = "",
+    val artistDisplayName: String? = null,
     val artistNationality: String? = null,
     val artistBeginDate: String? = null,
     val artistEndDate: String? = null,

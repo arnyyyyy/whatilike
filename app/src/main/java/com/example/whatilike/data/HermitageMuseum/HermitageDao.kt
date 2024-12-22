@@ -55,7 +55,7 @@ class HermitageMuseumApiService {
                 val description = document.select("meta[property=og:description]").attr("content")
                 val objectURL = url
 
-                if (title.contains("Государственный Эрмитаж", ignoreCase = true) && description.contains("Смотрите музейные коллекции онлайн", ignoreCase = true)) {
+                if (title.contains("Государственный Эрмитаж", ignoreCase = true)) {
                     return@withContext null
                 }
 
@@ -64,7 +64,7 @@ class HermitageMuseumApiService {
                     primaryImage = imageUrl,
                     primaryImageSmall = imageUrl,
                     title = title,
-                    period = description,
+                    period = null,
                     objectURL = objectURL
                 )
             } catch (e: Exception) {

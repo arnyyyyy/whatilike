@@ -1,5 +1,7 @@
 package com.example.whatilike.screens
 
+import android.content.Intent
+import android.net.Uri
 import android.util.Log
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.animateFloatAsState
@@ -42,7 +44,12 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.withStyle
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImagePainter
@@ -53,6 +60,7 @@ import com.example.whatilike.data.MuseumApi
 import com.example.whatilike.ui.components.PaperBackground
 import com.example.whatilike.ui.theme.Brown
 import com.example.whatilike.ui.theme.DarkBeige
+import com.google.common.io.Files.append
 import com.google.firebase.auth.FirebaseUser
 import kotlinx.coroutines.launch
 import kotlin.math.absoluteValue
@@ -373,6 +381,8 @@ fun ArtworkCard(
         ) {
             if (isFlipped) {
 
+                val context = LocalContext.current
+
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -388,23 +398,47 @@ fun ArtworkCard(
                             text = currentArtwork.value.title,
                             fontSize = 20.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color.Black
+                            color = Color.Black,
+                            textAlign = TextAlign.Center
                         )
+                        if (!currentArtwork.value.artistDisplayName.isNullOrEmpty() || !currentArtwork.value.culture.isNullOrEmpty() || !currentArtwork.value.period.isNullOrEmpty() || !currentArtwork.value.objectDate.isNullOrEmpty()) {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = (if (!currentArtwork.value.artistDisplayName.isNullOrEmpty()) currentArtwork.value.artistDisplayName!!
+                                else currentArtwork.value.culture ?: "") +  " " + if (!currentArtwork.value.period.isNullOrEmpty()) currentArtwork.value.period!! else
+                                    currentArtwork.value.objectDate ?: "",
+                                fontSize = 16.sp,
+                                color = Color.Gray
+                            )
+                        }
+//                        if (!currentArtwork.value.period.isNullOrEmpty() || !currentArtwork.value.objectDate.isNullOrEmpty()) {
+//                            Spacer(modifier = Modifier.height(8.dp))
+//                            Text(
+//                                text = if (!currentArtwork.value.period.isNullOrEmpty()) currentArtwork.value.period!! else
+//                                    currentArtwork.value.objectDate!!,
+//                                fontSize = 20.sp,
+//                                fontWeight = FontWeight.Bold,
+//                                color = Color.Gray
+//                            )
+//                        }
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = currentArtwork.value.artistDisplayName,
+                            text = buildAnnotatedString {
+                                withStyle(style = SpanStyle(textDecoration = TextDecoration.Underline)) {
+                                    append("Go to Museum Source")
+                                }
+                            },
+//                            text = "i - Museum Source",
                             fontSize = 16.sp,
-                            color = Color.Gray
+                            color = Color.Gray,
+                            modifier = Modifier.clickable {
+                                val intent = Intent(
+                                    Intent.ACTION_VIEW,
+                                    Uri.parse(currentArtwork.value.objectURL)
+                                )
+                                context.startActivity(intent)
+                            }
                         )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = currentArtwork.value.period ?: currentArtwork.value.objectDate
-                            ?: "",
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.Black
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
                     }
                 }
             } else {

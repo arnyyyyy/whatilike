@@ -91,11 +91,11 @@ class HarvardMuseumApiService {
                     objectID = objectId + HARVARD_MUSEUM_SHIFT,
                     primaryImage = record.imageUrl,
                     primaryImageSmall = record.imageUrl,
-                    title = record.title,
-                    artistDisplayName = record.artistDisplayName,
-                    objectDate = record.objectDate,
-                    period = record.description,
-                    culture = record.culture,
+                    title =  if (record.title != "null") record.title else "",
+                    artistDisplayName = if (record.artistDisplayName != "null") record.artistDisplayName else null,
+                    objectDate =  if (record.objectDate!= "null")  record.objectDate else "",
+                    period =  if (record.description != "null") record.description else null,
+                    culture = if ( record.culture != "null")  record.culture else "",
                     objectURL = record.objectURL
                 )
             } catch (e: Exception) {
