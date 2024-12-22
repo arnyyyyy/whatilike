@@ -223,14 +223,15 @@ fun LikedArtworkCard(
                                     println("Artwork ${artwork.objectID} deleted!")
                                 },
                                 modifier = Modifier
+                                    .clip(RoundedCornerShape(3))
                                     .background(Color.Gray)
                                     .padding(16.dp)
-                                    .clip(RoundedCornerShape(16))
+                                    .align(Alignment.CenterVertically)
                             ) {
                                 Icon(
                                     imageVector = Icons.Filled.Delete,
                                     contentDescription = "Delete",
-                                    tint = Color.White
+                                    tint = Color.White,
                                 )
                             }
                         }
