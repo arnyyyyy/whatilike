@@ -1,14 +1,12 @@
 package com.example.whatilike.screens
 
 import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.*
@@ -42,7 +40,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
-import androidx.lifecycle.viewModelScope
+import androidx.compose.ui.window.DialogProperties
 import coil.compose.rememberAsyncImagePainter
 import com.example.whatilike.R
 import com.example.whatilike.cached.user.FolderViewModel
@@ -50,6 +48,7 @@ import com.example.whatilike.cached.user.LikedArtworksViewModel
 import com.example.whatilike.data.ArtObject
 import com.example.whatilike.data.downloadArtwork
 import com.example.whatilike.ui.components.PaperBackground
+import com.example.whatilike.ui.theme.Beige
 import com.example.whatilike.ui.theme.DarkBeige
 import com.example.whatilike.ui.theme.UltraLightGrey
 import kotlinx.coroutines.delay
@@ -80,7 +79,6 @@ fun FavouritesScreen(viewModel: LikedArtworksViewModel, foldersViewModel: Folder
             PaperBackground(color = DarkBeige, modifier = Modifier.fillMaxSize())
             Column(modifier = Modifier.fillMaxSize()) {
                 Spacer(modifier = Modifier.height(16.dp))
-//                Row() {
                 Text(
                     text = "Favourites",
                     fontFamily = FontFamily.Monospace,
@@ -90,8 +88,6 @@ fun FavouritesScreen(viewModel: LikedArtworksViewModel, foldersViewModel: Folder
                         .padding(bottom = 10.dp)
                 )
 
-//                    IconButton(onClick = { foldersViewModel.addFolder("folder1") }) { }
-//                }
 
                 if (likedArtworks.isEmpty()) {
                     Box(
@@ -126,16 +122,10 @@ fun LikedArtworkCard(
     onDeleteClicked: () -> Unit,
     likedArtworksViewModel: LikedArtworksViewModel
 ) {
-//    var offsetX by remember { mutableFloatStateOf(0f) }
     var isSwipedLeft by remember { mutableStateOf(false) }
     var isDeleted by remember { mutableStateOf(false) }
     var showDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
-
-//    val animatedOffsetX by animateFloatAsState(
-//        targetValue = if (isDeleted) -500f else offsetX,
-//        animationSpec = tween(durationMillis = 300), label = ""
-//    )
 
     val offsetX = remember { Animatable(0f) }
 
@@ -243,103 +233,112 @@ fun LikedArtworkCard(
     }
 
     if (showDialog) {
-        Dialog(onDismissRequest = { showDialog = false }) {
-            var scale by remember { mutableStateOf(1f) }
-            var offset by remember { mutableStateOf(Offset(0f, 0f)) }
-
+        Dialog(onDismissRequest = { showDialog = false }, content = {
             Box(
-                Modifier
+                modifier = Modifier
                     .fillMaxWidth()
-                    .background(Color.Black.copy(alpha = 0.8f))
-                    .pointerInput(Unit) {
-                        detectTransformGestures { _, pan, zoom, _ ->
-                            scale *= zoom
-                            offset = Offset(
-                                x = offset.x + pan.x,
-                                y = offset.y + pan.y
+                    .padding(0.dp)
+            ) {
+                var scale by remember { mutableStateOf(1f) }
+                var offset by remember { mutableStateOf(Offset(0f, 0f)) }
+
+                Box(
+                    Modifier
+                        .padding(all = 0.dp)
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(3))
+                        .background(Color.Black.copy(alpha = 0.6f))
+                        .pointerInput(Unit) {
+                            detectTransformGestures { _, pan, zoom, _ ->
+                                scale *= zoom
+                                offset = Offset(
+                                    x = offset.x + pan.x,
+                                    y = offset.y + pan.y
+                                )
+                            }
+                        }
+                ) {
+
+                    Column(
+                        Modifier
+                            .fillMaxWidth()
+                            .align(Alignment.Center)
+                            .padding(top = 48.dp)
+                    ) {
+                        val painter = rememberAsyncImagePainter(
+                            model = artwork.primaryImage,
+                            imageLoader = likedArtworksViewModel.imageLoader.value
+
+                        )
+
+                        Image(
+                            painter = painter,
+                            contentDescription = artwork.title,
+                            modifier = Modifier
+                                .padding(16.dp)
+                                .graphicsLayer(
+                                    scaleX = scale,
+                                    scaleY = scale,
+                                    translationX = offset.x,
+                                    translationY = offset.y
+                                )
+                        )
+                        Text(
+                            text = artwork.title,
+                            color = Color.White,
+                            fontSize = 18.sp,
+                            modifier = Modifier
+                                .align(Alignment.CenterHorizontally)
+                                .padding(16.dp)
+                        )
+                    }
+                    Row(
+                        modifier = Modifier
+                            .align(Alignment.TopCenter)
+                            .padding(16.dp)
+                    ) {
+                        IconButton(
+                            onClick = { showDialog = false },
+                            modifier = Modifier
+                                .background(Color.Black.copy(alpha = 0.6f), CircleShape)
+
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "Close",
+                                tint = Color.White
                             )
                         }
-                    }
-            ) {
+                        Spacer(modifier = Modifier.width(16.dp))
 
-                Column(
-                    Modifier
-                        .fillMaxWidth()
-                        .align(Alignment.Center)
-                        .padding(top = 48.dp)
-                ) {
-                    val painter = rememberAsyncImagePainter(
-                        model = artwork.primaryImage,
-                        imageLoader = likedArtworksViewModel.imageLoader.value
-
-                    )
-
-                    Image(
-                        painter = painter,
-                        contentDescription = artwork.title,
-                        modifier = Modifier
-                            .padding(16.dp)
-                            .graphicsLayer(
-                                scaleX = scale,
-                                scaleY = scale,
-                                translationX = offset.x,
-                                translationY = offset.y
-                            )
-                    )
-                    Text(
-                        text = artwork.title,
-                        color = Color.White,
-                        fontSize = 18.sp,
-                        modifier = Modifier
-                            .align(Alignment.CenterHorizontally)
-                            .padding(16.dp)
-                    )
-                }
-                Row(
-                    modifier = Modifier
-                        .align(Alignment.TopCenter)
-                        .padding(16.dp)
-                ) {
-                    IconButton(
-                        onClick = { showDialog = false },
-                        modifier = Modifier.background(Color.Black.copy(alpha = 0.6f), CircleShape)
-
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Close,
-                            contentDescription = "Close",
-                            tint = Color.White
-                        )
-                    }
-                    Spacer(modifier = Modifier.width(16.dp))
-
-                    Button(
-                        onClick = {
-                            downloadArtwork(context, artwork.primaryImage!!, artwork.title)
-                        },
-                        colors = ButtonColors(
-                            contentColor = Color.Black.copy(alpha = 0.6f),
-                            containerColor = Color.Black.copy(alpha = 0.6f),
-                            disabledContentColor = Color.Black.copy(alpha = 0.6f),
-                            disabledContainerColor = Color.Black.copy(alpha = 0.6f)
-                        ),
-                        shape = CircleShape,
-                        modifier = Modifier.background(Color.Black.copy(alpha = 0.6f), CircleShape)
-
-                    ) {
-                        Image(
-                            painter = painterResource(id = R.drawable.download),
-                            contentDescription = "Download",
+                        Button(
+                            onClick = {
+                                downloadArtwork(context, artwork.primaryImage!!, artwork.title)
+                            },
+                            colors = ButtonColors(
+                                contentColor = Color.Black.copy(alpha = 0.6f),
+                                containerColor = Color.Black.copy(alpha = 0.6f),
+                                disabledContentColor = Color.Black.copy(alpha = 0.6f),
+                                disabledContainerColor = Color.Black.copy(alpha = 0.6f)
+                            ),
+                            shape = CircleShape,
                             modifier = Modifier
-                                .height(25.dp)
-                                .width(25.dp)
 
-                        )
+                        ) {
+                            Image(
+                                painter = painterResource(id = R.drawable.download),
+                                contentDescription = "Download",
+                                modifier = Modifier
+                                    .height(25.dp)
+                                    .width(25.dp)
+
+                            )
+                        }
+
                     }
-
                 }
             }
         }
+        )
     }
-
 }

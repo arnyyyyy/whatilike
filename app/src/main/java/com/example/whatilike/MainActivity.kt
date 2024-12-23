@@ -151,8 +151,8 @@ class MainActivity : ComponentActivity() {
 
         return mapOf(
             "userProfile" to userProfileViewModel,
-            "art" to artViewModel,
             "liked" to likedArtworksViewModel,
+            "art" to artViewModel,
             "folders" to folderViewModel
         )
     }
