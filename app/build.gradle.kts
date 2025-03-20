@@ -1,7 +1,8 @@
 plugins {
+    id("com.google.gms.google-services") version "4.4.2"
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
-    id("com.google.gms.google-services")
+    id("com.google.devtools.ksp") version "1.9.20-1.0.14"
 }
 
 android {
@@ -10,7 +11,7 @@ android {
 
     defaultConfig {
         applicationId = "com.example.whatilike"
-        minSdk = 29
+        minSdk = 25
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
@@ -46,25 +47,44 @@ android {
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            excludes += "/META-INF/versions/9/OSGI-INF/MANIFEST.MF"
         }
     }
 }
 
 dependencies {
-    implementation(platform(libs.firebase.bom))
-    implementation(libs.firebase.analytics)
-    implementation(libs.firebase.auth)
-    implementation(libs.firebase.firestore)
-    implementation(libs.play.services.auth)
-    implementation (libs.firebase.database)
-    implementation (libs.androidx.navigation.compose)
-    implementation (libs.firebase.messaging)
+    implementation(libs.work.runtime.ktx)
+    implementation(libs.identity.jvm)
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.work.testing)
+    ksp(libs.androidx.room.compiler)
+    implementation(libs.androidx.room.ktx.v251)
 
-    implementation (libs.retrofit)
-    implementation (libs.converter.gson)
+    implementation(platform("com.google.firebase:firebase-bom:33.5.1"))
+    implementation("com.google.firebase:firebase-storage")
+    implementation("com.google.firebase:firebase-analytics")
+    implementation("com.google.firebase:firebase-auth")
+    implementation("com.google.firebase:firebase-firestore")
+    implementation("com.google.firebase:firebase-database")
+    implementation("com.google.accompanist:accompanist-pager:0.36.0")
+    implementation("com.google.accompanist:accompanist-pager-indicators:0.36.0")
+    implementation("com.google.firebase:firebase-appcheck-playintegrity")
+
+
+
+    implementation(libs.gms.play.services.auth)
+
+    implementation(libs.androidx.navigation.compose)
+
+    implementation(libs.androidx.material)
+
+    implementation(libs.retrofit)
+    implementation(libs.converter.gson)
     implementation(libs.coil.compose)
 
-    implementation (libs.androidx.material)
+    implementation(libs.androidx.material)
+    implementation (libs.jsoup)
+
 
 
     implementation(libs.androidx.core.ktx)
@@ -77,6 +97,9 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.runtime.livedata)
+    implementation(libs.androidx.media3.exoplayer)
+    implementation(libs.androidx.room.common)
+    implementation(libs.androidx.room.ktx)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

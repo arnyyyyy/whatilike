@@ -1,23 +1,22 @@
 package com.example.whatilike
 
-import android.app.NotificationChannel
-import android.app.NotificationManager
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.*
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontFamily
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
-import com.example.whatilike.screens.GalleryScreen
+import androidx.lifecycle.ViewModelProvider
+import com.example.whatilike.cached.user.ArtworkFoldersDatabase
+import com.example.whatilike.cached.user.FolderViewModel
+import com.example.whatilike.cached.user.FolderViewModelFactory
+import com.example.whatilike.cached.user.LikedArtworksDatabase
+import com.example.whatilike.cached.user.LikedArtworksViewModel
+import com.example.whatilike.cached.user.LikedArtworksViewModelFactory
+import com.example.whatilike.cached.user.UserDatabase
+import com.example.whatilike.cached.user.UserProfileViewModel
+import com.example.whatilike.cached.user.UserProfileViewModelFactory
+import com.example.whatilike.data.ArtViewModel
+import com.example.whatilike.data.ArtViewModelFactory
 import com.example.whatilike.ui.theme.WhatilikeTheme
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
@@ -28,10 +27,13 @@ import com.google.android.gms.tasks.Task
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.GoogleAuthProvider
-
 import com.example.whatilike.screens.AuthScreen
-import com.example.whatilike.screens.FavouritesScreen
-import com.example.whatilike.screens.ProfileScreen
+import com.example.whatilike.screens.NavigationGraph
+import com.example.whatilike.screens.SplashScreen
+import com.google.firebase.appcheck.FirebaseAppCheck
+import com.google.firebase.appcheck.playintegrity.PlayIntegrityAppCheckProviderFactory
+import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.delay
 
 class MainActivity : ComponentActivity() {
     private lateinit var auth: FirebaseAuth
@@ -53,6 +55,19 @@ class MainActivity : ComponentActivity() {
         auth = FirebaseAuth.getInstance()
         auth.addAuthStateListener(authListener)
 
+        val firebaseAppCheck = FirebaseAppCheck.getInstance()
+        firebaseAppCheck.installAppCheckProviderFactory(
+            PlayIntegrityAppCheckProviderFactory.getInstance()
+        )
+
+        val models = initializeViewModels()
+        val userProfileViewModel: UserProfileViewModel =
+            models["userProfile"] as UserProfileViewModel
+        val likedArtViewModel: LikedArtworksViewModel = models["liked"] as LikedArtworksViewModel
+        val artViewModel: ArtViewModel = models["art"] as ArtViewModel
+        val foldersViewModel: FolderViewModel = models["folders"] as FolderViewModel
+
+
 //        FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
 //            if (task.isSuccessful) {
 //                val token = task.result
@@ -62,12 +77,34 @@ class MainActivity : ComponentActivity() {
 //            }
 //        }
 
-        createNotificationChannels()
+//        createNotificationChannels()
         configureGoogleSignIn()
 
         setContent {
             WhatilikeTheme {
-                MainScreen()
+                var isLoading by remember { mutableStateOf(true) }
+
+                LaunchedEffect(Unit) {
+//                    launch { likedArtViewModel.loadLikedArtworks() }
+                    while (artViewModel.isLoading.value) {
+                        delay(100)
+                    }
+
+                    isLoading = false
+
+                }
+
+                SplashScreen(
+                    isLoading = isLoading,
+                    onLoadingComplete = {
+                        MainScreen(
+                            userProfileViewModel = userProfileViewModel,
+                            artViewModel = artViewModel,
+                            likedArtworksViewModel = likedArtViewModel,
+                            foldersViewModel = foldersViewModel
+                        )
+                    }
+                )
             }
         }
     }
@@ -81,6 +118,45 @@ class MainActivity : ComponentActivity() {
         auth.signOut()
     }
 
+    private fun initializeViewModels(): Map<String, Any> {
+        val userProfileDao = UserDatabase.getInstance(this).userProfileDao()
+        val userViewModelFactory =
+            UserProfileViewModelFactory(
+                userProfileDao = userProfileDao,
+                FirebaseFirestore.getInstance(),
+                this
+            )
+        val userProfileViewModel =
+            ViewModelProvider(this, userViewModelFactory)[UserProfileViewModel::class.java]
+
+        val likedArtworksDao = LikedArtworksDatabase.getInstance(this).likedArtworks()
+        val likedArtworksViewModelFactory =
+            LikedArtworksViewModelFactory(likedArtworksDao, FirebaseFirestore.getInstance(), this)
+        val likedArtworksViewModel =
+            ViewModelProvider(
+                this,
+                likedArtworksViewModelFactory
+            )[LikedArtworksViewModel::class.java]
+
+        val foldersDao = ArtworkFoldersDatabase.getInstance(this).folders()
+        val foldersViewModelFactory =
+            FolderViewModelFactory(foldersDao, FirebaseFirestore.getInstance(), this)
+        val folderViewModel =
+            ViewModelProvider(this, foldersViewModelFactory)[FolderViewModel::class.java]
+
+        val artworkViewModelFactory = ArtViewModelFactory(context = this)
+        val artViewModel =
+            ViewModelProvider(this, artworkViewModelFactory)[ArtViewModel::class.java]
+
+
+        return mapOf(
+            "userProfile" to userProfileViewModel,
+            "liked" to likedArtworksViewModel,
+            "art" to artViewModel,
+            "folders" to folderViewModel
+        )
+    }
+
     private fun configureGoogleSignIn() {
         val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
             .requestIdToken(getString(R.string.default_web_client_id))
@@ -89,66 +165,46 @@ class MainActivity : ComponentActivity() {
         googleSignInClient = GoogleSignIn.getClient(this, gso)
     }
 
-    private fun createNotificationChannels() {
-        val channels = listOf(
-            NotificationChannel(
-                "channel1_id",
-                "Channel 1",
-                NotificationManager.IMPORTANCE_HIGH
-            ).apply {
-                description = "This is Channel 1"
-            },
-            NotificationChannel(
-                "channel2_id",
-                "Channel 2",
-                NotificationManager.IMPORTANCE_LOW
-            ).apply {
-                description = "This is Channel 2"
-            }
-        )
-
-        val manager = getSystemService(NotificationManager::class.java)
-        channels.forEach { manager.createNotificationChannel(it) }
-    }
+//    private fun createNotificationChannels() {
+//        val channels = listOf(
+//            NotificationChannel(
+//                "channel1_id",
+//                "Channel 1",
+//                NotificationManager.IMPORTANCE_HIGH
+//            ).apply {
+//                description = "This is Channel 1"
+//            },
+//            NotificationChannel(
+//                "channel2_id",
+//                "Channel 2",
+//                NotificationManager.IMPORTANCE_LOW
+//            ).apply {
+//                description = "This is Channel 2"
+//            }
+//        )
+//
+//        val manager = getSystemService(NotificationManager::class.java)
+//        channels.forEach { manager.createNotificationChannel(it) }
+//    }
 
     @Composable
-    fun MainScreen() {
+    fun MainScreen(
+        userProfileViewModel: UserProfileViewModel,
+        artViewModel: ArtViewModel,
+        likedArtworksViewModel: LikedArtworksViewModel,
+        foldersViewModel: FolderViewModel
+    ) {
         if (currentUser != null) {
-            NavigationGraph(currentUser)
+            userProfileViewModel.initializeUserProfileFromFirebase()
+            NavigationGraph(
+                currentUser,
+                userProfileViewModel,
+                artViewModel,
+                likedArtworksViewModel = likedArtworksViewModel,
+                foldersViewModel = foldersViewModel
+            ) { signOut() }
         } else {
             AuthScreen(onSignInClick = { signInWithGoogle() })
-        }
-    }
-
-    @Composable
-    fun NavigationGraph(user: FirebaseUser?) {
-        val navController = rememberNavController()
-        Scaffold(
-            bottomBar = {
-                NavigationBar {
-                    NavigationBarItem(
-                        icon = { Text("Favs", fontFamily = FontFamily.Monospace) },
-                        selected = false,
-                        onClick = { navController.navigate("favs") }
-                    )
-                    NavigationBarItem(
-                        icon = { Text("Gallery", fontFamily = FontFamily.Monospace) },
-                        selected = false,
-                        onClick = { navController.navigate("gallery") }
-                    )
-                    NavigationBarItem(
-                        icon = { Text("Me", fontFamily = FontFamily.Monospace) },
-                        selected = false,
-                        onClick = { navController.navigate("me") }
-                    )
-                }
-            }
-        ) { innerPadding ->
-            NavHost(navController, startDestination = "favs", Modifier.padding(innerPadding)) {
-                composable("favs") { FavouritesScreen() }
-                composable("gallery") { GalleryScreen() }
-                composable("me") { ProfileScreen(user, signOut = { signOut() }) }
-            }
         }
     }
 
